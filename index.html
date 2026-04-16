@@ -15,8 +15,8 @@
             --success: #10B981;
             --easy: #10B981;
             --easy-hover: #059669;
-            --normal: #3B82F6;
-            --normal-hover: #2563EB;
+            --normal: #F59E0B;
+            --normal-hover: #D97706;
             --hard: #EF4444;
             --hard-hover: #DC2626;
         }
@@ -28,9 +28,9 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             min-height: 100vh;
             margin: 0;
+            padding-top: 3rem; /* 上部の余白を追加 */
         }
 
         .container {
@@ -41,135 +41,129 @@
             text-align: center;
             width: 100%;
             max-width: 550px;
+            margin-bottom: 2rem; /* フッターとの間隔 */
         }
 
-        h1 {
-            margin-top: 0;
-            color: var(--primary);
-            font-size: 1.8rem;
-        }
-
-        .description {
-            color: var(--text-muted);
-            margin-bottom: 2rem;
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
+        h1 { margin-top: 0; color: var(--primary); font-size: 1.8rem; }
+        
+        .description { color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.5; }
 
         /* ゲーム画面用スタイル */
-        #game-area, #result-area {
-            display: none;
-        }
+        #game-area, #result-area { display: none; }
 
-        .target-char {
-            font-size: 6rem;
-            font-weight: bold;
-            margin: 1.5rem 0;
-            line-height: 1;
-            color: var(--text-main);
-        }
+        .target-char { font-size: 6rem; font-weight: bold; margin: 1.5rem 0; line-height: 1; color: var(--text-main); }
 
         input[type="text"] {
-            font-size: 2rem;
-            text-align: center;
-            width: 100px;
-            padding: 0.5rem;
-            border: 2px solid #D1D5DB;
-            border-radius: 0.5rem;
-            outline: none;
-            transition: border-color 0.2s;
+            font-size: 2rem; text-align: center; width: 100px; padding: 0.5rem;
+            border: 2px solid #D1D5DB; border-radius: 0.5rem; outline: none; transition: border-color 0.2s;
             ime-mode: active;
         }
+        input[type="text"]:focus { border-color: var(--primary); }
 
-        input[type="text"]:focus {
-            border-color: var(--primary);
-        }
+        .stats-board { display: flex; justify-content: space-around; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #E5E7EB; }
+        .stat-item { display: flex; flex-direction: column; align-items: center; }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+        .stat-value { font-size: 1.25rem; font-weight: bold; color: var(--primary); }
 
-        .stats-board {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid #E5E7EB;
-        }
-
-        .stat-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .stat-label {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-bottom: 0.25rem;
-        }
-
-        .stat-value {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: var(--primary);
-        }
-
-        .difficulty-select {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 1rem;
-        }
-
+        /* ボタンとフォームスタイル */
         button {
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border-radius: 0.5rem;
-            cursor: pointer;
+            color: white; border: none; border-radius: 0.5rem; cursor: pointer;
             transition: background-color 0.2s, transform 0.1s;
         }
-
         button:active { transform: scale(0.98); }
+
+        .difficulty-btn {
+            width: 100%; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; margin-bottom: 0.8rem;
+        }
+        .difficulty-btn .title { font-size: 1.2rem; font-weight: bold; }
+        .difficulty-btn .desc { font-size: 0.8rem; font-weight: normal; opacity: 0.95; }
         
-        .btn-easy { background-color: var(--easy); }
-        .btn-easy:hover { background-color: var(--easy-hover); }
-        .btn-normal { background-color: var(--normal); }
-        .btn-normal:hover { background-color: var(--normal-hover); }
-        .btn-hard { background-color: var(--hard); }
-        .btn-hard:hover { background-color: var(--hard-hover); }
-        .btn-reset { background-color: var(--primary); margin-top: 1rem;}
+        .btn-easy { background-color: var(--easy); } .btn-easy:hover { background-color: var(--easy-hover); }
+        .btn-normal { background-color: var(--normal); } .btn-normal:hover { background-color: var(--normal-hover); }
+        .btn-hard { background-color: var(--hard); } .btn-hard:hover { background-color: var(--hard-hover); }
+        
+        .btn-reset { background-color: var(--primary); padding: 0.75rem 1.5rem; font-size: 1.1rem; font-weight: bold; margin-top: 1rem; }
         .btn-reset:hover { background-color: var(--primary-hover); }
 
-        .progress {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
+        .form-group {
+            margin-bottom: 1.5rem; background: var(--bg); padding: 1rem; border-radius: 0.5rem;
+            display: flex; justify-content: center; align-items: center; gap: 1rem;
         }
-        
-        .current-diff {
-            display: inline-block;
-            font-size: 0.8rem;
-            padding: 0.2rem 0.6rem;
-            border-radius: 1rem;
-            color: white;
-            margin-bottom: 1rem;
+        select { padding: 0.4rem; font-size: 1rem; border-radius: 0.3rem; border: 1px solid #D1D5DB; }
+
+        .progress { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .current-diff { display: inline-block; font-size: 0.8rem; padding: 0.2rem 0.6rem; border-radius: 1rem; color: white; margin-bottom: 1rem; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .loading { padding: 2rem; background: var(--bg); border-radius: 0.5rem; color: var(--primary); font-weight: bold; }
+
+        /* フッター・サイテーションのスタイル */
+        .footer {
+            margin-top: auto;
+            padding: 2rem 1rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            width: 100%;
+        }
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        .citation {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            opacity: 0.8;
+            line-height: 1.4;
         }
     </style>
 </head>
 <body>
 
 <div class="container" id="start-screen">
-    <h1>Hangul Reflex v2</h1>
+    <h1>Hangul Reflex</h1>
     <p class="description">
-        ハングル1文字の入力速度を極めるゲーム。<br>
-        難易度を選択してスタートしてください。
+        リアルなデータに基づいたタイピングゲーム。<br>
+        難易度と問題数を選んでスタート！
     </p>
-    <p style="color: #EF4444; font-size: 0.85rem; margin-bottom: 1.5rem;">※プレイ前にキーボードを「韓国語入力（ハングル）」に切り替えてください。</p>
-    
-    <div class="difficulty-select">
-        <button class="btn-easy" onclick="startGame('easy')">Easy<br><span style="font-size:0.7rem;font-weight:normal;">(パッチムなし・基本)</span></button>
-        <button class="btn-normal" onclick="startGame('normal')">Normal<br><span style="font-size:0.7rem;font-weight:normal;">(日常頻出ハングル)</span></button>
-        <button class="btn-hard" onclick="startGame('hard')">Hard<br><span style="font-size:0.7rem;font-weight:normal;">(複雑なパッチム・レア)</span></button>
+
+    <div id="loading-msg" class="loading">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite; vertical-align: middle; margin-right: 0.5rem;">
+            <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round"></circle>
+        </svg>
+        CSVデータを読み込み中...
+    </div>
+
+    <div id="start-form" style="display: none;">
+        <p style="color: #EF4444; font-size: 0.85rem; margin-bottom: 1rem;">※キーボードを「韓国語入力（ハングル）」に切り替えてください。</p>
+        
+        <div class="form-group">
+            <label for="q-count" style="font-weight:bold;">問題数:</label>
+            <select id="q-count">
+                <option value="10">10問</option>
+                <option value="20">20問</option>
+                <option value="30">30問</option>
+            </select>
+        </div>
+        
+        <div class="difficulty-select">
+            <button class="btn-easy difficulty-btn" onclick="startGame('easy')">
+                <span class="title">Easy: 実戦モード</span>
+                <span class="desc">実際の出現頻度で重み付け！よく使う文字で実戦的な反射神経を養おう</span>
+            </button>
+            <button class="btn-normal difficulty-btn" onclick="startGame('normal')">
+                <span class="title">Normal: リストガチャ</span>
+                <span class="desc">CSV収録リストから均等に出題！見たこともないレア文字との遭遇戦</span>
+            </button>
+            <button class="btn-hard difficulty-btn" onclick="startGame('hard')">
+                <span class="title">Hard: 11,172の深淵</span>
+                <span class="desc">全ハングルから無慈悲に完全ランダム！タイピング神への挑戦状</span>
+            </button>
+        </div>
     </div>
 </div>
 
@@ -206,8 +200,19 @@
     <button class="btn-reset" onclick="resetGame()">タイトルへ戻る</button>
 </div>
 
+<footer class="footer">
+    Character frequency data is powered by <a href="https://github.com/Bin-2/FineFreq" target="_blank" rel="noopener noreferrer">FineFreq</a>.
+    <div class="citation">
+        Xu, B. (2025). FineFreq: A Multilingual Character Frequency Dataset from Web-Scale Text.<br>
+        <i>arXiv preprint arXiv:2512.09701</i>.
+    </div>
+</footer>
+
 <script>
-    const TOTAL_QUESTIONS = 10;
+    let hangulData = [];
+    let totalWeight = 0;
+    
+    let totalQuestions = 10;
     let currentTarget = '';
     let questionCount = 0;
     let currentDifficulty = 'normal';
@@ -229,81 +234,103 @@
     const currentReactionDisplay = document.getElementById('current-reaction');
     const currentTypingDisplay = document.getElementById('current-typing');
 
-    // === ハングル生成アルゴリズム ===
-    // ハングルは 0xAC00 + (初声 * 588) + (中声 * 28) + 終声 で計算される
-    function getWeightedRandomHangul(difficulty) {
-        let cho, jung, jong;
-
-        const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    // === CSVデータのパース関数 ===
+    function parseCSV(text) {
+        hangulData = [];
+        const lines = text.replace(/\r/g, '').split('\n');
+        if(lines.length === 0) return;
         
-        // 重み付きランダム選択関数
-        const weightedRandom = (items) => {
-            let sum = items.reduce((acc, item) => acc + item.w, 0);
-            let r = Math.random() * sum;
-            for (let item of items) {
-                r -= item.w;
-                if (r <= 0) return pickRandom(item.val);
-            }
-            return pickRandom(items[items.length - 1].val);
-        };
-
-        // 初声（子音）グループ
-        const CHO_BASIC = [0, 2, 3, 5, 6, 7, 9, 11, 12, 18]; // ㄱ,ㄴ,ㄷ,ㄹ,ㅁ,ㅂ,ㅅ,ㅇ,ㅈ,ㅎ (超頻出)
-        const CHO_ASPIRATED = [14, 15, 16, 17]; // ㅊ,ㅋ,ㅌ,ㅍ (激音)
-        const CHO_TENSE = [1, 4, 8, 10, 13]; // ㄲ,ㄸ,ㅃ,ㅆ,ㅉ (濃音)
-
-        // 中声（母音）グループ
-        const JUNG_BASIC = [0, 4, 8, 13, 18, 20]; // ㅏ,ㅓ,ㅗ,ㅜ,ㅡ,ㅣ (超頻出)
-        const JUNG_Y = [1, 5, 2, 6, 12, 17]; // ㅐ,ㅔ,ㅑ,ㅕ,ㅛ,ㅠ
-        const JUNG_W = [9, 11, 14, 15, 19]; // ㅘ,ㅚ,ㅝ,ㅟ,ㅢ
-        const JUNG_COMPLEX = [3, 7, 10, 16]; // ㅒ,ㅖ,ㅙ,ㅞ (レア)
-
-        // 終声（パッチム）グループ
-        const JONG_NONE = [0]; // パッチムなし
-        const JONG_BASIC = [4, 21, 8, 1, 16, 17]; // ㄴ,ㅇ,ㄹ,ㄱ,ㅁ,ㅂ (頻出パッチム)
-        const JONG_RARE = [19, 20, 22, 23, 24, 26, 27]; // ㅅ,ㅆ,ㅈ,ㅊ,ㅋ,ㅍ,ㅎ
-        const JONG_COMPLEX = [2, 3, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 18, 25]; // 複雑・二重パッチム
-
-        if (difficulty === 'easy') {
-            // Easy: 基本子音・母音のみ、パッチムなし
-            cho = pickRandom(CHO_BASIC);
-            jung = pickRandom(JUNG_BASIC);
-            jong = 0;
-        } else if (difficulty === 'normal') {
-            // Normal: 実際の韓国語の出現頻度に近いバランス
-            cho = weightedRandom([
-                {val: CHO_BASIC, w: 70}, {val: CHO_ASPIRATED, w: 20}, {val: CHO_TENSE, w: 10}
-            ]);
-            jung = weightedRandom([
-                {val: JUNG_BASIC, w: 60}, {val: JUNG_Y, w: 25}, {val: JUNG_W, w: 10}, {val: JUNG_COMPLEX, w: 5}
-            ]);
-            jong = weightedRandom([
-                {val: JONG_NONE, w: 45}, {val: JONG_BASIC, w: 45}, {val: JONG_RARE, w: 8}, {val: JONG_COMPLEX, w: 2}
-            ]);
-        } else {
-            // Hard: 頻出文字の確率を下げ、濃音・複雑な母音・複雑なパッチムの確率を爆上げ
-            cho = weightedRandom([
-                {val: CHO_BASIC, w: 20}, {val: CHO_ASPIRATED, w: 30}, {val: CHO_TENSE, w: 50}
-            ]);
-            jung = weightedRandom([
-                {val: JUNG_BASIC, w: 20}, {val: JUNG_Y, w: 30}, {val: JUNG_W, w: 30}, {val: JUNG_COMPLEX, w: 20}
-            ]);
-            jong = weightedRandom([
-                {val: JONG_NONE, w: 10}, {val: JONG_BASIC, w: 20}, {val: JONG_RARE, w: 30}, {val: JONG_COMPLEX, w: 40}
-            ]);
+        const header = lines[0].split(',');
+        const charIdx = header.indexOf('character');
+        const freqIdx = header.indexOf('total_frequency_all_time');
+        
+        if (charIdx === -1 || freqIdx === -1) {
+            throw new Error("必要なカラム（character, total_frequency_all_time）が見つかりません。");
         }
+        
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            
+            let cols = [];
+            let cur = "";
+            let inQuotes = false;
+            for (let j = 0; j < lines[i].length; j++) {
+                const c = lines[i][j];
+                if (c === '"') { inQuotes = !inQuotes; }
+                else if (c === ',' && !inQuotes) { cols.push(cur); cur = ""; }
+                else { cur += c; }
+            }
+            cols.push(cur);
+            
+            if (cols.length > Math.max(charIdx, freqIdx)) {
+                const char = cols[charIdx];
+                const freq = parseInt(cols[freqIdx], 10);
+                
+                // 1文字かつ、ハングルのUnicode範囲 (0xAC00 ~ 0xD7A3) かつ、頻度が数値であるものを抽出
+                if (char.length === 1 && !isNaN(freq)) {
+                    const code = char.charCodeAt(0);
+                    if (code >= 0xAC00 && code <= 0xD7A3) {
+                        hangulData.push({ char: char, weight: freq });
+                    }
+                }
+            }
+        }
+        // Easy用の重み合計を計算
+        totalWeight = hangulData.reduce((sum, item) => sum + item.weight, 0);
+    }
 
-        return String.fromCharCode(0xAC00 + (cho * 588) + (jung * 28) + jong);
+    // === ページ読み込み時にCSVを取得 ===
+    window.addEventListener('DOMContentLoaded', () => {
+        fetch('kor_Hang.csv')
+            .then(response => {
+                if (!response.ok) throw new Error('ネットワークエラー: ' + response.statusText);
+                return response.text();
+            })
+            .then(text => {
+                parseCSV(text);
+                document.getElementById('loading-msg').style.display = 'none';
+                document.getElementById('start-form').style.display = 'block';
+            })
+            .catch(err => {
+                const msg = document.getElementById('loading-msg');
+                msg.style.color = '#EF4444';
+                msg.innerHTML = '⚠️ CSVの読み込みに失敗しました。<br><span style="font-size:0.8rem; font-weight:normal;">GitHub Pagesにデプロイするか、ローカルサーバー経由で開いてください。</span>';
+                console.error('Error loading CSV:', err);
+            });
+    });
+
+    // === ハングル抽出ロジック ===
+    function getHangul() {
+        if (currentDifficulty === 'easy') {
+            // Easy: frequencyの重みづけランダム
+            let r = Math.random() * totalWeight;
+            for (let i = 0; i < hangulData.length; i++) {
+                r -= hangulData[i].weight;
+                if (r <= 0) return hangulData[i].char;
+            }
+            return hangulData[hangulData.length - 1].char;
+
+        } else if (currentDifficulty === 'normal') {
+            // Normal: CSVリストから完全ランダム
+            const idx = Math.floor(Math.random() * hangulData.length);
+            return hangulData[idx].char;
+
+        } else {
+            // Hard: 全ハングル (0xAC00 ~ 0xD7A3) から数学的に完全ランダム
+            const HANGUL_START = 0xAC00;
+            const HANGUL_END = 0xD7A3;
+            return String.fromCharCode(Math.floor(Math.random() * (HANGUL_END - HANGUL_START + 1)) + HANGUL_START);
+        }
     }
 
     // ゲーム開始
     function startGame(difficulty) {
         currentDifficulty = difficulty;
+        totalQuestions = parseInt(document.getElementById('q-count').value, 10);
         questionCount = 0;
         reactionTimes = [];
         typingTimes = [];
         
-        // バッジのスタイル設定
         diffBadge.innerText = difficulty.toUpperCase();
         if(difficulty === 'easy') diffBadge.style.backgroundColor = 'var(--easy)';
         if(difficulty === 'normal') diffBadge.style.backgroundColor = 'var(--normal)';
@@ -317,16 +344,15 @@
     }
 
     function nextQuestion() {
-        if (questionCount >= TOTAL_QUESTIONS) {
+        if (questionCount >= totalQuestions) {
             showResult();
             return;
         }
 
         questionCount++;
-        progressText.innerText = `問題: ${questionCount} / ${TOTAL_QUESTIONS}`;
+        progressText.innerText = `問題: ${questionCount} / ${totalQuestions}`;
         
-        // 難易度に応じたハングルを生成
-        currentTarget = getWeightedRandomHangul(currentDifficulty);
+        currentTarget = getHangul();
         targetDisplay.innerText = currentTarget;
         
         inputField.value = '';
