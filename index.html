@@ -1,134 +1,19 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hangul Reflex - 1文字ハングルタイピング</title>
-    <style>
-        :root {
-            --primary: #4F46E5;
-            --primary-hover: #4338CA;
-            --bg: #F3F4F6;
-            --surface: #FFFFFF;
-            --text-main: #1F2937;
-            --text-muted: #6B7280;
-            --success: #10B981;
-            --easy: #10B981;
-            --easy-hover: #059669;
-            --normal: #F59E0B;
-            --normal-hover: #D97706;
-            --hard: #EF4444;
-            --hard-hover: #DC2626;
-        }
-
-        body {
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text-main);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding-top: 3rem; /* 上部の余白を追加 */
-        }
-
-        .container {
-            background-color: var(--surface);
-            padding: 3rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-            text-align: center;
-            width: 100%;
-            max-width: 550px;
-            margin-bottom: 2rem; /* フッターとの間隔 */
-        }
-
-        h1 { margin-top: 0; color: var(--primary); font-size: 1.8rem; }
-        
-        .description { color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.5; }
-
-        /* ゲーム画面用スタイル */
-        #game-area, #result-area { display: none; }
-
-        .target-char { font-size: 6rem; font-weight: bold; margin: 1.5rem 0; line-height: 1; color: var(--text-main); }
-
-        input[type="text"] {
-            font-size: 2rem; text-align: center; width: 100px; padding: 0.5rem;
-            border: 2px solid #D1D5DB; border-radius: 0.5rem; outline: none; transition: border-color 0.2s;
-            ime-mode: active;
-        }
-        input[type="text"]:focus { border-color: var(--primary); }
-
-        .stats-board { display: flex; justify-content: space-around; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #E5E7EB; }
-        .stat-item { display: flex; flex-direction: column; align-items: center; }
-        .stat-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; }
-        .stat-value { font-size: 1.25rem; font-weight: bold; color: var(--primary); }
-
-        /* ボタンとフォームスタイル */
-        button {
-            color: white; border: none; border-radius: 0.5rem; cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
-        }
-        button:active { transform: scale(0.98); }
-
-        .difficulty-btn {
-            width: 100%; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; margin-bottom: 0.8rem;
-        }
-        .difficulty-btn .title { font-size: 1.2rem; font-weight: bold; }
-        .difficulty-btn .desc { font-size: 0.8rem; font-weight: normal; opacity: 0.95; }
-        
-        .btn-easy { background-color: var(--easy); } .btn-easy:hover { background-color: var(--easy-hover); }
-        .btn-normal { background-color: var(--normal); } .btn-normal:hover { background-color: var(--normal-hover); }
-        .btn-hard { background-color: var(--hard); } .btn-hard:hover { background-color: var(--hard-hover); }
-        
-        .btn-reset { background-color: var(--primary); padding: 0.75rem 1.5rem; font-size: 1.1rem; font-weight: bold; margin-top: 1rem; }
-        .btn-reset:hover { background-color: var(--primary-hover); }
-
-        .form-group {
-            margin-bottom: 1.5rem; background: var(--bg); padding: 1rem; border-radius: 0.5rem;
-            display: flex; justify-content: center; align-items: center; gap: 1rem;
-        }
-        select { padding: 0.4rem; font-size: 1rem; border-radius: 0.3rem; border: 1px solid #D1D5DB; }
-
-        .progress { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem; }
-        .current-diff { display: inline-block; font-size: 0.8rem; padding: 0.2rem 0.6rem; border-radius: 1rem; color: white; margin-bottom: 1rem; }
-
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .loading { padding: 2rem; background: var(--bg); border-radius: 0.5rem; color: var(--primary); font-weight: bold; }
-
-        /* フッター・サイテーションのスタイル */
-        .footer {
-            margin-top: auto;
-            padding: 2rem 1rem;
-            text-align: center;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            width: 100%;
-        }
-        .footer a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .footer a:hover {
-            text-decoration: underline;
-        }
-        .citation {
-            margin-top: 0.5rem;
-            font-size: 0.75rem;
-            opacity: 0.8;
-            line-height: 1.4;
-        }
-    </style>
+    <title>Hangul Reflex</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="container" id="start-screen">
     <h1>Hangul Reflex</h1>
     <p class="description">
-        リアルなデータに基づいたタイピングゲーム。<br>
-        難易度と問題数を選んでスタート！
+        実データに基づくハングル1文字の反射タイピングゲーム。<br>
+        <strong>※本作は「構築速度（指が文字を組み立てる速さ）」を極めて重く評価します。モタつくとスコアが吹き飛びます。</strong>
     </p>
 
     <div id="loading-msg" class="loading">
@@ -140,7 +25,7 @@
 
     <div id="start-form" style="display: none;">
         <p style="color: #EF4444; font-size: 0.85rem; margin-bottom: 1rem;">※キーボードを「韓国語入力（ハングル）」に切り替えてください。</p>
-        
+
         <div class="form-group">
             <label for="q-count" style="font-weight:bold;">問題数:</label>
             <select id="q-count">
@@ -149,30 +34,36 @@
                 <option value="30">30問</option>
             </select>
         </div>
-        
+
         <div class="difficulty-select">
             <button class="btn-easy difficulty-btn" onclick="startGame('easy')">
-                <span class="title">Easy: 実戦モード</span>
-                <span class="desc">実際の出現頻度で重み付け！よく使う文字で実戦的な反射神経を養おう</span>
+                <span class="title">Easy: スタンダード</span>
+                <span class="desc">実際の出現頻度で完全重み付け。よく使う文字で基礎固め！</span>
             </button>
             <button class="btn-normal difficulty-btn" onclick="startGame('normal')">
-                <span class="title">Normal: リストガチャ</span>
-                <span class="desc">CSV収録リストから均等に出題！見たこともないレア文字との遭遇戦</span>
+                <span class="title">Normal: チャレンジ</span>
+                <span class="desc">重み付けを緩和し、普段見ないマイナー文字の出現率をアップ！</span>
             </button>
             <button class="btn-hard difficulty-btn" onclick="startGame('hard')">
-                <span class="title">Hard: 11,172の深淵</span>
-                <span class="desc">全ハングルから無慈悲に完全ランダム！タイピング神への挑戦状</span>
+                <span class="title">Hard: リストガチャ</span>
+                <span class="desc">CSV収録リスト（数千文字）から完全均等ランダムの無慈悲モード。</span>
             </button>
         </div>
     </div>
 </div>
 
 <div class="container" id="game-area">
-    <div class="progress" id="progress-text">問題: 1 / 10</div>
-    <div class="current-diff" id="diff-badge">Normal</div>
+    <div class="top-info">
+        <div class="current-diff" id="diff-badge">Normal</div>
+        <div class="progress" id="progress-text">1 / 10</div>
+        <button class="btn-quit" onclick="quitGame()">中断</button>
+    </div>
+
     <div class="target-char" id="target-display">가</div>
+    <div class="freq-info" id="freq-display"></div>
+
     <input type="text" id="hangul-input" autocomplete="off" spellcheck="false" placeholder="입력">
-    
+
     <div class="stats-board">
         <div class="stat-item">
             <span class="stat-label">反応時間</span>
@@ -182,19 +73,34 @@
             <span class="stat-label">構築時間</span>
             <span class="stat-value" id="current-typing">--- ms</span>
         </div>
+        <div class="stat-item">
+            <span class="stat-label">スコア</span>
+            <span class="stat-value stat-score" id="current-score">0</span>
+        </div>
     </div>
 </div>
 
 <div class="container" id="result-area">
     <h1>Result</h1>
-    <div style="margin: 2rem 0;">
-        <div class="stat-item" style="margin-bottom: 1.5rem;">
-            <span class="stat-label">平均 反応時間 (認識〜第1打)</span>
-            <span class="stat-value" style="font-size: 2rem;" id="avg-reaction">0 ms</span>
+
+    <div class="rank-box" id="rank-box">
+        <div class="rank-label">最終評価ランク</div>
+        <div class="rank-title" id="rank-title">【S+】世宗大王のゴーストライター</div>
+        <div class="total-score-display">Total Score: <span id="final-score" style="font-weight:bold;">0</span></div>
+    </div>
+
+    <div class="stats-board" style="border-top: none; padding-top: 0; margin-top: 1rem;">
+        <div class="stat-item">
+            <span class="stat-label">平均 反応時間</span>
+            <span class="stat-value" id="avg-reaction">0 ms</span>
         </div>
         <div class="stat-item">
-            <span class="stat-label">平均 構築時間 (第1打〜完成)</span>
-            <span class="stat-value" style="font-size: 2rem;" id="avg-typing">0 ms</span>
+            <span class="stat-label">平均 構築時間</span>
+            <span class="stat-value" id="avg-typing">0 ms</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">平均 スコア/文字</span>
+            <span class="stat-value stat-score" id="avg-score">0</span>
         </div>
     </div>
     <button class="btn-reset" onclick="resetGame()">タイトルへ戻る</button>
@@ -208,217 +114,6 @@
     </div>
 </footer>
 
-<script>
-    let hangulData = [];
-    let totalWeight = 0;
-    
-    let totalQuestions = 10;
-    let currentTarget = '';
-    let questionCount = 0;
-    let currentDifficulty = 'normal';
-    
-    let timeCharAppeared = 0;
-    let timeFirstKeyPressed = 0;
-    
-    let reactionTimes = [];
-    let typingTimes = [];
-
-    // UI要素
-    const startScreen = document.getElementById('start-screen');
-    const gameArea = document.getElementById('game-area');
-    const resultArea = document.getElementById('result-area');
-    const targetDisplay = document.getElementById('target-display');
-    const inputField = document.getElementById('hangul-input');
-    const progressText = document.getElementById('progress-text');
-    const diffBadge = document.getElementById('diff-badge');
-    const currentReactionDisplay = document.getElementById('current-reaction');
-    const currentTypingDisplay = document.getElementById('current-typing');
-
-    // === CSVデータのパース関数 ===
-    function parseCSV(text) {
-        hangulData = [];
-        const lines = text.replace(/\r/g, '').split('\n');
-        if(lines.length === 0) return;
-        
-        const header = lines[0].split(',');
-        const charIdx = header.indexOf('character');
-        const freqIdx = header.indexOf('total_frequency_all_time');
-        
-        if (charIdx === -1 || freqIdx === -1) {
-            throw new Error("必要なカラム（character, total_frequency_all_time）が見つかりません。");
-        }
-        
-        for (let i = 1; i < lines.length; i++) {
-            if (!lines[i].trim()) continue;
-            
-            let cols = [];
-            let cur = "";
-            let inQuotes = false;
-            for (let j = 0; j < lines[i].length; j++) {
-                const c = lines[i][j];
-                if (c === '"') { inQuotes = !inQuotes; }
-                else if (c === ',' && !inQuotes) { cols.push(cur); cur = ""; }
-                else { cur += c; }
-            }
-            cols.push(cur);
-            
-            if (cols.length > Math.max(charIdx, freqIdx)) {
-                const char = cols[charIdx];
-                const freq = parseInt(cols[freqIdx], 10);
-                
-                // 1文字かつ、ハングルのUnicode範囲 (0xAC00 ~ 0xD7A3) かつ、頻度が数値であるものを抽出
-                if (char.length === 1 && !isNaN(freq)) {
-                    const code = char.charCodeAt(0);
-                    if (code >= 0xAC00 && code <= 0xD7A3) {
-                        hangulData.push({ char: char, weight: freq });
-                    }
-                }
-            }
-        }
-        // Easy用の重み合計を計算
-        totalWeight = hangulData.reduce((sum, item) => sum + item.weight, 0);
-    }
-
-    // === ページ読み込み時にCSVを取得 ===
-    window.addEventListener('DOMContentLoaded', () => {
-        fetch('kor_Hang.csv')
-            .then(response => {
-                if (!response.ok) throw new Error('ネットワークエラー: ' + response.statusText);
-                return response.text();
-            })
-            .then(text => {
-                parseCSV(text);
-                document.getElementById('loading-msg').style.display = 'none';
-                document.getElementById('start-form').style.display = 'block';
-            })
-            .catch(err => {
-                const msg = document.getElementById('loading-msg');
-                msg.style.color = '#EF4444';
-                msg.innerHTML = '⚠️ CSVの読み込みに失敗しました。<br><span style="font-size:0.8rem; font-weight:normal;">GitHub Pagesにデプロイするか、ローカルサーバー経由で開いてください。</span>';
-                console.error('Error loading CSV:', err);
-            });
-    });
-
-    // === ハングル抽出ロジック ===
-    function getHangul() {
-        if (currentDifficulty === 'easy') {
-            // Easy: frequencyの重みづけランダム
-            let r = Math.random() * totalWeight;
-            for (let i = 0; i < hangulData.length; i++) {
-                r -= hangulData[i].weight;
-                if (r <= 0) return hangulData[i].char;
-            }
-            return hangulData[hangulData.length - 1].char;
-
-        } else if (currentDifficulty === 'normal') {
-            // Normal: CSVリストから完全ランダム
-            const idx = Math.floor(Math.random() * hangulData.length);
-            return hangulData[idx].char;
-
-        } else {
-            // Hard: 全ハングル (0xAC00 ~ 0xD7A3) から数学的に完全ランダム
-            const HANGUL_START = 0xAC00;
-            const HANGUL_END = 0xD7A3;
-            return String.fromCharCode(Math.floor(Math.random() * (HANGUL_END - HANGUL_START + 1)) + HANGUL_START);
-        }
-    }
-
-    // ゲーム開始
-    function startGame(difficulty) {
-        currentDifficulty = difficulty;
-        totalQuestions = parseInt(document.getElementById('q-count').value, 10);
-        questionCount = 0;
-        reactionTimes = [];
-        typingTimes = [];
-        
-        diffBadge.innerText = difficulty.toUpperCase();
-        if(difficulty === 'easy') diffBadge.style.backgroundColor = 'var(--easy)';
-        if(difficulty === 'normal') diffBadge.style.backgroundColor = 'var(--normal)';
-        if(difficulty === 'hard') diffBadge.style.backgroundColor = 'var(--hard)';
-
-        startScreen.style.display = 'none';
-        resultArea.style.display = 'none';
-        gameArea.style.display = 'block';
-        
-        nextQuestion();
-    }
-
-    function nextQuestion() {
-        if (questionCount >= totalQuestions) {
-            showResult();
-            return;
-        }
-
-        questionCount++;
-        progressText.innerText = `問題: ${questionCount} / ${totalQuestions}`;
-        
-        currentTarget = getHangul();
-        targetDisplay.innerText = currentTarget;
-        
-        inputField.value = '';
-        inputField.focus();
-        
-        timeFirstKeyPressed = 0;
-        timeCharAppeared = performance.now();
-    }
-
-    // キーボードの最初の入力（反応）を検知
-    inputField.addEventListener('keydown', (e) => {
-        if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') return;
-
-        if (timeFirstKeyPressed === 0) {
-            timeFirstKeyPressed = performance.now();
-            const reactionTime = timeFirstKeyPressed - timeCharAppeared;
-            currentReactionDisplay.innerText = `${reactionTime.toFixed(0)} ms`;
-        }
-    });
-
-    // 入力値の変更（ハングルの構築）を検知
-    inputField.addEventListener('input', (e) => {
-        if (inputField.value === currentTarget) {
-            const timeCharCompleted = performance.now();
-            
-            if (timeFirstKeyPressed === 0) timeFirstKeyPressed = timeCharAppeared;
-
-            const reactionTime = timeFirstKeyPressed - timeCharAppeared;
-            const typingTime = timeCharCompleted - timeFirstKeyPressed;
-
-            reactionTimes.push(reactionTime);
-            typingTimes.push(typingTime);
-
-            currentTypingDisplay.innerText = `${typingTime.toFixed(0)} ms`;
-            
-            targetDisplay.style.color = 'var(--success)';
-            inputField.disabled = true;
-
-            setTimeout(() => {
-                targetDisplay.style.color = 'var(--text-main)';
-                inputField.disabled = false;
-                nextQuestion();
-            }, 400);
-        }
-    });
-
-    // 結果画面
-    function showResult() {
-        gameArea.style.display = 'none';
-        resultArea.style.display = 'block';
-
-        const avgReaction = reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length;
-        const avgTyping = typingTimes.reduce((a, b) => a + b, 0) / typingTimes.length;
-
-        document.getElementById('avg-reaction').innerText = `${avgReaction.toFixed(0)} ms`;
-        document.getElementById('avg-typing').innerText = `${avgTyping.toFixed(0)} ms`;
-        
-        currentReactionDisplay.innerText = '--- ms';
-        currentTypingDisplay.innerText = '--- ms';
-    }
-
-    // リセット
-    function resetGame() {
-        resultArea.style.display = 'none';
-        startScreen.style.display = 'block';
-    }
-</script>
+<script src="script.js"></script>
 </body>
 </html>
