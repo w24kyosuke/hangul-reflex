@@ -390,9 +390,14 @@ function displayJudgment(reactTime, typeTime) {
     return judgment;
 }
 function updateSurvivalTimer(timestamp) {
-    if (!isPlaying || currentMode !== 'survival') return;
-    if (!lastFrameTime) lastFrameTime = timestamp;
-    
+    if (!isPlaying || currentMode !== 'survival')return;
+    // 最初のフレームの時刻を記録し、次のフレームから計算開始
+    if (lastFrameTime === 0) {
+        lastFrameTime = timestamp;
+        timerAnimationFrame = requestAnimationFrame(updateSurvivalTimer);
+        return;
+    }
+
     const dt = (timestamp - lastFrameTime) / 1000;
     lastFrameTime = timestamp;
     survivalTimeRemaining -= dt;
@@ -402,6 +407,7 @@ function updateSurvivalTimer(timestamp) {
     
     if (survivalTimeRemaining <= 0) {
         isPlaying = false;
+        timerAnimationFrame = null;
         showResult();
     } else {
         timerAnimationFrame = requestAnimationFrame(updateSurvivalTimer);
@@ -409,6 +415,12 @@ function updateSurvivalTimer(timestamp) {
 }
 
 window.startGame = function(difficulty) {
+    // 以前のタイマーが動いていれば完全に停止させる
+    if (timerAnimationFrame) {
+        cancelAnimationFrame(timerAnimationFrame);
+        timerAnimationFrame = null;
+    }
+
     isPlaying = true; 
     currentDifficulty = difficulty;
     
@@ -416,10 +428,13 @@ window.startGame = function(difficulty) {
         totalQuestions = parseInt(document.getElementById('q-count').value, 10);
         els.timerContainer.style.display = 'none';
     } else {
+        if (timerAnimationFrame) cancelAnimationFrame(timerAnimationFrame);
+        timerAnimationFrame = null; // タイマー参照を完全にリセット
         totalQuestions = Infinity;
         survivalTimeRemaining = 10.0;
         lastFrameTime = 0;
         els.timerContainer.style.display = 'block';
+        els.timerBar.style.width = '100%'; // カウントダウン開始時にゲージをフルにする
     }
 
     questionCount = 0; totalGameScore = 0; currentCombo = 0; maxCombo = 0;
@@ -497,7 +512,7 @@ function nextQuestion() {
     
     // サバイバルモードのタイマー始動（最初の問題が表示されるタイミングで開始）
     if (currentMode === 'survival' && !timerAnimationFrame) {
-        lastFrameTime = performance.now(); // 開始時間を現在にセット
+        lastFrameTime = 0; // updateSurvivalTimer内で最初のtimestampを取得させる
         timerAnimationFrame = requestAnimationFrame(updateSurvivalTimer);
     }
 
@@ -514,7 +529,11 @@ function nextQuestion() {
 
 window.quitGame = function() {
     isPlaying = false; 
-    if (timerAnimationFrame) cancelAnimationFrame(timerAnimationFrame);
+    
+    if (timerAnimationFrame) {
+        cancelAnimationFrame(timerAnimationFrame);
+        timerAnimationFrame = null;
+    }
     if (countdownTimeout) clearTimeout(countdownTimeout);
     
     els.countdownOverlay.style.display = 'none';
@@ -598,7 +617,10 @@ function unlockTitle(titleId) {
 
 function showResult() {
     isPlaying = false;
-    if (timerAnimationFrame) cancelAnimationFrame(timerAnimationFrame);
+    if (timerAnimationFrame) {
+        cancelAnimationFrame(timerAnimationFrame);
+        timerAnimationFrame = null; // 終了時もリセット
+    }
     els.gameArea.style.display = 'none';
     els.resultArea.style.display = 'block';
 
