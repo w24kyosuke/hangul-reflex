@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hangul Reflex</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,11 +14,9 @@
 <div class="container" id="start-screen">
     <h1>Hangul Reflex</h1>
     
-    <div id="player-title-display" class="player-title" style="display: none;"></div>
-
     <p class="description">
-        実データに基づくハングル1文字の反射タイピングゲーム。<br>
-        構築速度と正確性が全て。限界を超えて図鑑を埋め尽くせ！
+        ハングル1文字の反射タイピングゲーム<br>
+        構築速度と正確性を極めよ
     </p>
 
     <div id="loading-msg" class="loading">
@@ -27,48 +28,45 @@
 
     <div id="start-form" style="display: none;">
         <button class="btn-collection" onclick="showCollection()" id="btn-collection-top">
-            📖 コレクション＆図鑑を見る
+            コレクション＆図鑑を見る
         </button>
 
-        <p style="color: #EF4444; font-size: 0.85rem; margin-bottom: 1rem;">※キーボードを「韓国語入力（ハングル）」に切り替えてください。</p>
+        <p style="color: #EF4444; font-size: 0.85rem; margin-bottom: 1.5rem;">※キーボードを「韓国語入力（ハングル）」に切り替えてください。</p>
         
-        <div class="form-group">
-            <label for="game-mode" style="font-weight:bold;">モード:</label>
-            <select id="game-mode" onchange="toggleModeSettings()">
-                <option value="normal">通常 (問題数指定)</option>
-                <option value="survival">🔥サバイバル (エンドレス)🔥</option>
-            </select>
+        <div class="mode-toggle">
+            <button id="btn-mode-normal" class="mode-btn active" onclick="setGameMode('normal')">通常 (問題数指定)</button>
+            <button id="btn-mode-survival" class="mode-btn" onclick="setGameMode('survival')">サバイバル (エンドレス)</button>
         </div>
 
         <div class="form-group" id="q-count-group">
-            <label for="q-count" style="font-weight:bold;">問題数:</label>
+            <label for="q-count" style="font-weight:bold; color: var(--primary);">問題数:</label>
             <select id="q-count">
                 <option value="10">10問</option>
                 <option value="20">20問</option>
                 <option value="30">30問</option>
             </select>
         </div>
-
-        <div class="form-group" id="title-equip-group" style="display: none;">
-            <label for="title-select" style="font-weight:bold;">称号装備:</label>
-            <select id="title-select" onchange="equipTitle()"></select>
-        </div>
         
         <div class="difficulty-select">
             <button class="btn-easy difficulty-btn" onclick="startGame('easy')">
                 <span class="title">Easy: スタンダード</span>
-                <span class="desc">超頻出の文字で基礎固め！</span>
+                <span class="desc">超頻出文字オンリー</span>
             </button>
             <button class="btn-normal difficulty-btn" onclick="startGame('normal')">
                 <span class="title">Normal: チャレンジ</span>
-                <span class="desc">出現回数1万回以上の文字からランダム。</span>
+                <span class="desc">低頻度文字もランダムに出題</span>
             </button>
             <button class="btn-hard difficulty-btn" onclick="startGame('hard')">
                 <span class="title">Hard: リストガチャ</span>
-                <span class="desc">全11,172文字から完全ランダムの無慈悲モード。</span>
+                <span class="desc">完全ランダム - 無慈悲</span>
             </button>
         </div>
     </div>
+</div>
+
+<div id="modal-overlay" class="modal-overlay" style="display: none;" onclick="closeHangulDetail()">
+    <div id="hangul-detail" class="hangul-detail" onclick="event.stopPropagation();">
+        </div>
 </div>
 
 <div class="container" id="collection-area" style="display: none;">
@@ -80,17 +78,16 @@
     </div>
 
     <div id="collection-titles-content" class="collection-content">
-        <p>あなたが獲得した称号一覧です。</p>
         <div id="titles-container"></div>
     </div>
 
     <div id="collection-hangul-content" class="collection-content" style="display: none;">
         <div class="progress-box">
-            <span>遭遇率: </span>
+            <span style="color: var(--primary); font-weight: bold;">全体遭遇率: </span>
             <strong id="hangul-encounter-rate">0.00%</strong>
-            <span style="font-size: 0.8rem; color: var(--text-muted);"> (<span id="hangul-encounter-count">0</span> / 11172)</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted);"> (<span id="hangul-encounter-count">0</span> / 11,172)</span>
         </div>
-        <div id="hangul-detail" class="hangul-detail" style="display:none;"></div>
+        
         <div id="hangul-container"></div>
     </div>
 
@@ -100,6 +97,11 @@
         <button class="btn-danger" onclick="resetAllData()">⚠️ セーブデータを全て消去する</button>
     </div>
 </div>
+
+<div id="countdown-overlay" class="modal-overlay" style="display: none; background: rgba(15, 17, 21, 0.6);">
+    <div id="countdown-display" style="font-size: 5rem; font-weight: 900; color: var(--primary); text-shadow: 0 0 20px rgba(212, 175, 55, 0.8);">3</div>
+</div>
+
 
 <div class="container" id="game-area" style="position: relative;">
     <div class="top-info">

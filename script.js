@@ -4,6 +4,8 @@ let hangulDataHard = [];
 let hangulFreqMap = {}; 
 let totalWeightEasy = 0;
 
+let tierTotals = { 'C': 0, 'B': 0, 'A': 0, 'S': 0, 'SS': 0 };
+
 let isPlaying = false;
 let currentMode = 'normal';
 let totalQuestions = 10;
@@ -21,53 +23,49 @@ let totalGameScore = 0;
 
 let currentCombo = 0;
 let maxCombo = 0;
-let survivalTimeRemaining = 10.0; 
+let survivalTimeRemaining = 10.0;
 let lastFrameTime = 0;
 let timerAnimationFrame = null;
+let countdownTimeout = null;
 
-// --- 称号マスターデータ (30個) ---
 const TITLE_RULES = [
-    // --- Normal Easy ---
     { id: "ne1", cat: "通常 - Easy", name: "맞춤법 파괴자 (正書法破壊者)", cond: "プレイする", thresh: 0, mode: "normal", diff: "easy" },
     { id: "ne2", cat: "通常 - Easy", name: "집현전 학동 (集賢殿の学童)", cond: "スコア 4,000 以上", thresh: 4000, mode: "normal", diff: "easy" },
     { id: "ne3", cat: "通常 - Easy", name: "띄어쓰기 감별사 (分かち書き鑑定士)", cond: "スコア 7,000 以上", thresh: 7000, mode: "normal", diff: "easy" },
     { id: "ne4", cat: "通常 - Easy", name: "두벌식 타자기의 달인 (2ボル式タイプライターの達人)", cond: "スコア 10,000 以上", thresh: 10000, mode: "normal", diff: "easy" },
     { id: "ne5", cat: "通常 - Easy", name: "세종대왕의 숨겨진 오른팔 (世宗大王の隠された右腕)", cond: "スコア 13,000 以上", thresh: 13000, mode: "normal", diff: "easy" },
-    // --- Normal Normal ---
     { id: "nn1", cat: "通常 - Normal", name: "오타와 사이시옷의 늪 (誤字と사이시옷の沼)", cond: "プレイする", thresh: 0, mode: "normal", diff: "normal" },
     { id: "nn2", cat: "通常 - Normal", name: "주시경 선생의 수제자 (周時経先生の高弟)", cond: "スコア 5,000 以上", thresh: 5000, mode: "normal", diff: "normal" },
     { id: "nn3", cat: "通常 - Normal", name: "국립국어원 명예 연구원 (国立国語院の名誉研究員)", cond: "スコア 8,000 以上", thresh: 8000, mode: "normal", diff: "normal" },
     { id: "nn4", cat: "通常 - Normal", name: "한글 맞춤법 제1항의 화신 (ハングル正書法第1項の化身)", cond: "スコア 12,000 以上", thresh: 12000, mode: "normal", diff: "normal" },
     { id: "nn5", cat: "通常 - Normal", name: "훈민정음 해례본의 진정한 저자 (訓民正音解例本の真の著者)", cond: "スコア 16,000 以上", thresh: 16000, mode: "normal", diff: "normal" },
-    // --- Normal Hard ---
     { id: "nh1", cat: "通常 - Hard", name: "11,172개의 게슈탈트 붕괴 (11,172個のゲシュタルト崩壊)", cond: "プレイする", thresh: 0, mode: "normal", diff: "hard" },
     { id: "nh2", cat: "通常 - Hard", name: "복잡한 겹받침의 지배자 (複雑な二重パッチムの支配者)", cond: "スコア 6,000 以上", thresh: 6000, mode: "normal", diff: "hard" },
     { id: "nh3", cat: "通常 - Hard", name: "잃어버린 아래아(ㆍ)를 찾는 자 (失われた아래아[ㆍ]を探求する者)", cond: "スコア 10,000 以上", thresh: 10000, mode: "normal", diff: "hard" },
     { id: "nh4", cat: "通常 - Hard", name: "팔만대장경 디지털 복원가 (八万大蔵経のデジタル復元家)", cond: "スコア 15,000 以上", thresh: 15000, mode: "normal", diff: "hard" },
     { id: "nh5", cat: "通常 - Hard", name: "우주적 훈민정음 창제자 (宇宙的訓民正音の創製者)", cond: "スコア 20,000 以上", thresh: 20000, mode: "normal", diff: "hard" },
-    // --- Survival Easy ---
     { id: "se1", cat: "サバイバル - Easy", name: "획순을 잊은 손가락 (画順を忘れた指)", cond: "プレイする", thresh: 0, mode: "survival", diff: "easy" },
     { id: "se2", cat: "サバイバル - Easy", name: "서당의 지치지 않는 붓 (書堂の疲れない筆)", cond: "WAVE 15 到達", thresh: 15, mode: "survival", diff: "easy" },
     { id: "se3", cat: "サバイバル - Easy", name: "모음조화의 영원한 굴레 (母音調和の永遠の羈絆)", cond: "WAVE 30 到達", thresh: 30, mode: "survival", diff: "easy" },
     { id: "se4", cat: "サバイバル - Easy", name: "조선 왕조 실록 자동 기록기 (朝鮮王朝実録の自動記録機)", cond: "WAVE 60 到達", thresh: 60, mode: "survival", diff: "easy" },
     { id: "se5", cat: "サバイバル - Easy", name: "영원히 돌아가는 금속 활자 (永遠に回り続ける金属活字)", cond: "WAVE 100 到達", thresh: 100, mode: "survival", diff: "easy" },
-    // --- Survival Normal ---
     { id: "sn1", cat: "サバイバル - Normal", name: "형태소 단위의 붕괴 (形態素単位の崩壊)", cond: "プレイする", thresh: 0, mode: "survival", diff: "normal" },
     { id: "sn2", cat: "サバイバル - Normal", name: "집현전 철야 작업반장 (集賢殿の徹夜作業班長)", cond: "WAVE 10 到達", thresh: 10, mode: "survival", diff: "normal" },
     { id: "sn3", cat: "サバイバル - Normal", name: "표준국어대사전 무한 정독자 (標準国語大辞典の無限精読者)", cond: "WAVE 25 到達", thresh: 25, mode: "survival", diff: "normal" },
     { id: "sn4", cat: "サバイバル - Normal", name: "자음과 모음의 무한동력 (子音と母音の無限動力)", cond: "WAVE 50 到達", thresh: 50, mode: "survival", diff: "normal" },
     { id: "sn5", cat: "サバイバル - Normal", name: "언어의 한계를 초월한 타건 (言語の限界を超越した打鍵)", cond: "WAVE 80 到達", thresh: 80, mode: "survival", diff: "normal" },
-    // --- Survival Hard ---
     { id: "sh1", cat: "サバイバル - Hard", name: "외계어 해독 실패 (宇宙語の解読失敗)", cond: "プレイする", thresh: 0, mode: "survival", diff: "hard" },
     { id: "sh2", cat: "サバイバル - Hard", name: "옛한글 망령들의 인도자 (古ハングルの亡霊たちの導き手)", cond: "WAVE 5 到達", thresh: 5, mode: "survival", diff: "hard" },
     { id: "sh3", cat: "サバイバル - Hard", name: "11,172번의 수라도 (11,172回の修羅道)", cond: "WAVE 15 到達", thresh: 15, mode: "survival", diff: "hard" },
     { id: "sh4", cat: "サバイバル - Hard", name: "한글 빅뱅의 한가운데 (ハングル・ビッグバンの中心)", cond: "WAVE 30 到達", thresh: 30, mode: "survival", diff: "hard" },
-    { id: "sh5", cat: "サバイバル - Hard", name: "다중우주 표준어 제정 위원회 (多元宇宙標準語制定委員会)", cond: "WAVE 50 到達", thresh: 50, mode: "survival", diff: "hard" }
+    { id: "sh5", cat: "サバイバル - Hard", name: "다중우주 표준어 제정 위원회 (多元宇宙標準語制定委員会)", cond: "WAVE 50 到達", thresh: 50, mode: "survival", diff: "hard" },
+    { id: "g1", cat: "特別実績", name: "무호흡 연타 신드롬 (無呼吸連打シンドローム)", cond: "MAX 50 COMBO 達成" },
+    { id: "g2", cat: "特別実績", name: "기계와의 융합 (機械との融合)", cond: "平均反応時間 150ms 未満でクリア" },
+    { id: "g3", cat: "特別実績", name: "운명을 비트는 손가락 (運命を捻じ曲げる指)", cond: "Hardモードで MAX 10 COMBO" },
+    { id: "g4", cat: "特別実績", name: "기적의 확률변동 (奇跡の確率変動)", cond: "Hardモードで PERFECT 判定" }
 ];
 
-// --- ローカルストレージ ---
 let unlockedTitles = JSON.parse(localStorage.getItem('hangulUnlockedTitles')) || [];
-let equippedTitleID = localStorage.getItem('hangulEquippedTitle') || '';
 let encounteredHangul = new Set(JSON.parse(localStorage.getItem('hangulEncountered')) || []);
 let unseenTitles = new Set(JSON.parse(localStorage.getItem('hangulUnseenTitles')) || []);
 let unseenHangul = new Set(JSON.parse(localStorage.getItem('hangulUnseenHangul')) || []);
@@ -91,20 +89,20 @@ const els = {
     timerBar: document.getElementById('timer-bar'),
     judgmentDisplay: document.getElementById('judgment-display'),
     comboDisplay: document.getElementById('combo-display'),
-    titleDisplay: document.getElementById('player-title-display'),
-    titleSelect: document.getElementById('title-select'),
-    titleEquipGroup: document.getElementById('title-equip-group'),
     qCountGroup: document.getElementById('q-count-group'),
     achievementAlert: document.getElementById('achievement-alert'),
     newAchievementName: document.getElementById('new-achievement-name'),
     survivalResultWave: document.getElementById('survival-result-wave'),
     maxComboResult: document.getElementById('max-combo-result'),
-    btnCollectionTop: document.getElementById('btn-collection-top')
+    btnCollectionTop: document.getElementById('btn-collection-top'),
+    countdownOverlay: document.getElementById('countdown-overlay'),
+    countdownDisplay: document.getElementById('countdown-display')
 };
 
-// === 初期化 ===
 function parseCSV(text) {
     hangulDataEasy = []; hangulDataNormal = []; hangulDataHard = [];
+    tierTotals = { 'C': 0, 'B': 0, 'A': 0, 'S': 0, 'SS': 0 };
+    
     const lines = text.replace(/\r/g, '').split('\n');
     if(lines.length === 0) return;
     const header = lines[0].split(',');
@@ -132,13 +130,18 @@ function parseCSV(text) {
                     hangulFreqMap[char] = freq; 
                     if (freq >= 10000) hangulDataNormal.push(item);
                     hangulDataEasy.push({ ...item, weight: freq });
+
+                    if (freq >= 100000000) tierTotals['C']++;
+                    else if (freq >= 10000000) tierTotals['B']++;
+                    else if (freq >= 1000000) tierTotals['A']++;
+                    else if (freq >= 10000) tierTotals['S']++;
+                    else tierTotals['SS']++;
                 }
             }
         }
     }
     totalWeightEasy = hangulDataEasy.reduce((sum, item) => sum + item.weight, 0);
     updateTopNotification();
-    initTitleUI();
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -156,55 +159,25 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function updateTopNotification() {
     if (unseenTitles.size > 0 || unseenHangul.size > 0) {
-        els.btnCollectionTop.innerHTML = `📖 コレクション＆図鑑を見る <span class="btn-new-badge">NEW</span>`;
+        els.btnCollectionTop.innerHTML = `コレクション＆図鑑を見る <span class="btn-new-badge">NEW</span>`;
     } else {
-        els.btnCollectionTop.innerHTML = `📖 コレクション＆図鑑を見る`;
+        els.btnCollectionTop.innerHTML = `コレクション＆図鑑を見る`;
     }
 }
 
-function initTitleUI() {
-    if (unlockedTitles.length > 0) {
-        els.titleEquipGroup.style.display = 'flex';
-        els.titleSelect.innerHTML = '<option value="">称号を外す</option>';
-        unlockedTitles.forEach(tid => {
-            const trule = TITLE_RULES.find(r => r.id === tid);
-            if(trule) {
-                const opt = document.createElement('option');
-                opt.value = tid; opt.innerText = trule.name;
-                if (tid === equippedTitleID) opt.selected = true;
-                els.titleSelect.appendChild(opt);
-            }
-        });
-    } else {
-        els.titleEquipGroup.style.display = 'none';
-    }
-
-    const eqRule = TITLE_RULES.find(r => r.id === equippedTitleID);
-    if (eqRule) {
-        els.titleDisplay.style.display = 'inline-block';
-        els.titleDisplay.innerText = eqRule.name;
-    } else {
-        els.titleDisplay.style.display = 'none';
-    }
-}
-
-window.equipTitle = function() {
-    equippedTitleID = els.titleSelect.value;
-    localStorage.setItem('hangulEquippedTitle', equippedTitleID);
-    initTitleUI();
+window.setGameMode = function(mode) {
+    currentMode = mode;
+    document.getElementById('btn-mode-normal').classList.remove('active');
+    document.getElementById('btn-mode-survival').classList.remove('active');
+    document.getElementById(`btn-mode-${mode}`).classList.add('active');
+    
+    els.qCountGroup.style.display = (mode === 'survival') ? 'none' : 'flex';
 };
 
-window.toggleModeSettings = function() {
-    currentMode = document.getElementById('game-mode').value;
-    els.qCountGroup.style.display = (currentMode === 'survival') ? 'none' : 'flex';
-};
-
-// === コレクション（図鑑）描画 ===
 window.showCollection = function() {
     els.startScreen.style.display = 'none';
     els.collectionArea.style.display = 'block';
     
-    // 称号リスト描画 (カテゴリ別)
     const titlesContainer = document.getElementById('titles-container');
     titlesContainer.innerHTML = '';
     
@@ -235,39 +208,49 @@ window.showCollection = function() {
         titlesContainer.appendChild(ul);
     });
 
-    // ハングル図鑑描画 (頻度別グループ化)
     document.getElementById('hangul-encounter-count').innerText = encounteredHangul.size;
-    const rate = (encounteredHangul.size / TOTAL_HANGUL_COUNT) * 100;
-    document.getElementById('hangul-encounter-rate').innerText = rate.toFixed(2) + '%';
+    const globalRate = (encounteredHangul.size / TOTAL_HANGUL_COUNT) * 100;
+    document.getElementById('hangul-encounter-rate').innerText = globalRate.toFixed(2) + '%';
     
     const hContainer = document.getElementById('hangul-container');
     hContainer.innerHTML = '';
     
     const tiers = [
-        { label: "【SS】 1億回以上 (超頻出)", min: 100000000 },
-        { label: "【S】 1000万回以上 (頻出)", min: 10000000 },
-        { label: "【A】 100万回以上 (一般)", min: 1000000 },
-        { label: "【B】 1万回以上 (稀)", min: 10000 },
-        { label: "【C】 1万回未満 (極レア)", min: 0 }
+        { id: 'C', label: "【C】 1億回以上 (超頻出)", min: 100000000, max: Infinity },
+        { id: 'B', label: "【B】 1000万回以上 (頻出)", min: 10000000, max: 100000000 },
+        { id: 'A', label: "【A】 100万回以上 (一般)", min: 1000000, max: 10000000 },
+        { id: 'S', label: "【S】 1万回以上 (稀)", min: 10000, max: 1000000 },
+        { id: 'SS', label: "【SS】 1万回未満 (極レア)", min: 0, max: 10000 }
     ];
 
     const sortedEncountered = Array.from(encounteredHangul).sort((a, b) => {
         return (hangulFreqMap[b] || 0) - (hangulFreqMap[a] || 0);
     });
 
-    tiers.forEach((tier, index) => {
+    tiers.forEach((tier) => {
         const charsInTier = sortedEncountered.filter(c => {
             const f = hangulFreqMap[c] || 0;
-            const max = index === 0 ? Infinity : tiers[index - 1].min;
-            return f >= tier.min && f < max;
+            return f >= tier.min && f < tier.max;
         });
 
-        if (charsInTier.length > 0) {
-            const catHeader = document.createElement('div');
-            catHeader.className = 'category-header';
-            catHeader.innerText = `${tier.label} - ${charsInTier.length}字`;
-            hContainer.appendChild(catHeader);
+        const totalInTier = tierTotals[tier.id] || 1; 
+        const encounterCount = charsInTier.length;
+        const tierRate = ((encounterCount / totalInTier) * 100).toFixed(2);
 
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'tier-header-info';
+        headerDiv.innerHTML = `
+            <span class="tier-title">${tier.label}</span>
+            <span class="tier-stats">${encounterCount} / ${totalInTier} (${tierRate}%)</span>
+        `;
+        hContainer.appendChild(headerDiv);
+
+        const progressDiv = document.createElement('div');
+        progressDiv.className = 'tier-progress-bar';
+        progressDiv.innerHTML = `<div class="tier-progress-fill" style="width: ${tierRate}%;"></div>`;
+        hContainer.appendChild(progressDiv);
+
+        if (encounterCount > 0) {
             const grid = document.createElement('div');
             grid.className = 'hangul-grid';
             
@@ -289,19 +272,25 @@ window.showCollection = function() {
     updateTopNotification();
 };
 
-function showHangulDetail(char) {
+window.showHangulDetail = function(char) {
     const freq = hangulFreqMap[char] || 0;
     const detailBox = document.getElementById('hangul-detail');
-    detailBox.innerHTML = `<strong>${char}</strong> <br>総出現頻度: ${freq.toLocaleString()} 回`;
-    detailBox.style.display = 'block';
-    detailBox.style.animation = 'none';
-    void detailBox.offsetWidth;
-    detailBox.style.animation = 'pop 0.2s';
+    detailBox.innerHTML = `
+        <strong>${char}</strong> 
+        <div style="font-size: 1rem; color: var(--text-muted); margin-bottom: 1rem;">総出現頻度</div>
+        <div style="font-size: 1.8rem; color: white;">${freq.toLocaleString()} 回</div>
+        <button onclick="closeHangulDetail()">閉じる</button>
+    `;
+    document.getElementById('modal-overlay').style.display = 'flex';
+}
+
+window.closeHangulDetail = function() {
+    document.getElementById('modal-overlay').style.display = 'none';
 }
 
 window.hideCollection = function() {
     els.collectionArea.style.display = 'none';
-    document.getElementById('hangul-detail').style.display = 'none';
+    closeHangulDetail();
     els.startScreen.style.display = 'block';
 };
 
@@ -323,7 +312,6 @@ window.resetAllData = function() {
     }
 };
 
-// === ゲーム進行 ===
 function setNextHangul() {
     let selected = null;
     if (currentDifficulty === 'easy') {
@@ -362,31 +350,45 @@ function calculateScore(reactTime, typeTime, freq, combo) {
 function displayJudgment(reactTime, typeTime) {
     const totalTime = reactTime + typeTime;
     let judgment = "LATE";
-    els.judgmentDisplay.className = "judgment-text"; 
+    let judgmentClass = "";
     
-    if (totalTime <= 450) { judgment = "PERFECT"; els.judgmentDisplay.classList.add('judgment-perfect'); currentCombo++; } 
-    else if (totalTime <= 750) { judgment = "GREAT"; els.judgmentDisplay.classList.add('judgment-great'); currentCombo++; } 
-    else if (totalTime <= 1200) { judgment = "GOOD"; els.judgmentDisplay.classList.add('judgment-good'); currentCombo++; } 
-    else if (totalTime <= 2000) { judgment = "OK"; els.judgmentDisplay.classList.add('judgment-ok'); currentCombo = 0; } 
-    else { judgment = "LATE"; els.judgmentDisplay.classList.add('judgment-late'); currentCombo = 0; }
+    if (totalTime <= 450) { judgment = "PERFECT"; judgmentClass = 'judgment-perfect'; currentCombo++; } 
+    else if (totalTime <= 750) { judgment = "GREAT"; judgmentClass = 'judgment-great'; currentCombo++; } 
+    else if (totalTime <= 1200) { judgment = "GOOD"; judgmentClass = 'judgment-good'; currentCombo++; } 
+    else if (totalTime <= 2000) { judgment = "OK"; judgmentClass = 'judgment-ok'; currentCombo = 0; } 
+    else { judgment = "LATE"; judgmentClass = 'judgment-late'; currentCombo = 0; }
 
     if (currentCombo > maxCombo) maxCombo = currentCombo;
 
-    els.judgmentDisplay.innerText = judgment;
-    els.judgmentDisplay.classList.add('show');
+    // --- 確実にアニメーションを発火させる「クローン手法」 ---
+    const oldJudgment = els.judgmentDisplay;
+    const newJudgment = oldJudgment.cloneNode(true); // 要素を複製
     
+    // クラスとテキストを設定
+    newJudgment.className = `judgment-text ${judgmentClass} show`;
+    newJudgment.innerText = judgment;
+    
+    // 古い要素を新しい要素に置き換える
+    oldJudgment.parentNode.replaceChild(newJudgment, oldJudgment);
+    
+    // elsオブジェクトの参照を新しい要素に更新しておく
+    els.judgmentDisplay = newJudgment;
+
+    // --- コンボの表示処理も同様にクローン手法で ---
     if (currentCombo >= 2) {
-        els.comboDisplay.style.display = 'block';
-        els.comboDisplay.innerText = `${currentCombo} COMBO!`;
-        els.comboDisplay.style.animation = 'none';
-        void els.comboDisplay.offsetWidth; 
-        els.comboDisplay.style.animation = 'pulse 0.3s';
+        const oldCombo = els.comboDisplay;
+        const newCombo = oldCombo.cloneNode(true);
+        newCombo.style.display = 'block';
+        newCombo.innerText = `${currentCombo} COMBO!`;
+        newCombo.style.animation = 'pulse 0.3s forwards'; // forwards を追加
+        oldCombo.parentNode.replaceChild(newCombo, oldCombo);
+        els.comboDisplay = newCombo;
     } else {
         els.comboDisplay.style.display = 'none';
     }
+    
     return judgment;
 }
-
 function updateSurvivalTimer(timestamp) {
     if (!isPlaying || currentMode !== 'survival') return;
     if (!lastFrameTime) lastFrameTime = timestamp;
@@ -409,37 +411,81 @@ function updateSurvivalTimer(timestamp) {
 window.startGame = function(difficulty) {
     isPlaying = true; 
     currentDifficulty = difficulty;
-    currentMode = document.getElementById('game-mode').value;
     
     if (currentMode === 'normal') {
         totalQuestions = parseInt(document.getElementById('q-count').value, 10);
         els.timerContainer.style.display = 'none';
     } else {
         totalQuestions = Infinity;
-        survivalTimeRemaining = 10.0; 
+        survivalTimeRemaining = 10.0;
         lastFrameTime = 0;
         els.timerContainer.style.display = 'block';
-        timerAnimationFrame = requestAnimationFrame(updateSurvivalTimer);
     }
 
     questionCount = 0; totalGameScore = 0; currentCombo = 0; maxCombo = 0;
     reactionTimes = []; typingTimes = [];
     els.achievementAlert.style.display = 'none';
-    els.survivalResultWave.style.display = 'none';
+
+    // カウントダウン中に前回の表示が残らないようリセット
+    els.targetDisplay.innerText = "";
+    els.progressText.innerText = "";
+    els.freqDisplay.innerText = "";
+    els.judgmentDisplay.innerText = "";
+    els.judgmentDisplay.className = "judgment-text"; 
     els.comboDisplay.style.display = 'none';
-    els.judgmentDisplay.classList.remove('show');
+    els.inputField.value = "";
+
+    
+    // 判定テキストの初期化（クラスをリセット）
+    els.judgmentDisplay.className = "judgment-text";
+    els.judgmentDisplay.innerText = "";
+    
+    // --- スコア等の表示を確実に初期化 ---
+    els.currentReaction.innerText = '--- ms';
+    els.currentTyping.innerText = '--- ms';
+    els.currentScore.innerText = '0';
     
     els.diffBadge.innerText = difficulty.toUpperCase();
     if(difficulty === 'easy') els.diffBadge.style.backgroundColor = 'var(--easy)';
     if(difficulty === 'normal') els.diffBadge.style.backgroundColor = 'var(--normal)';
     if(difficulty === 'hard') els.diffBadge.style.backgroundColor = 'var(--hard)';
 
-    els.currentScore.innerText = "0";
     els.startScreen.style.display = 'none';
     els.resultArea.style.display = 'none';
     els.gameArea.style.display = 'block';
-    nextQuestion();
+    
+    startCountdown();
 };
+
+function startCountdown() {
+    els.countdownOverlay.style.display = 'flex';
+    let count = 3;
+    
+    function tick() {
+        if (count > 0) {
+            els.countdownDisplay.innerText = count;
+            els.countdownDisplay.style.animation = 'none';
+            void els.countdownDisplay.offsetWidth; // リフロー強制
+            els.countdownDisplay.style.animation = 'countdownPop 1s ease-out forwards';
+            count--;
+            countdownTimeout = setTimeout(tick, 1000);
+        } else {
+            els.countdownDisplay.innerText = "시작! (START)";
+            els.countdownDisplay.style.animation = 'none';
+            void els.countdownDisplay.offsetWidth;
+            els.countdownDisplay.style.animation = 'countdownPop 1s ease-out forwards';
+            
+            countdownTimeout = setTimeout(() => {
+                els.countdownOverlay.style.display = 'none';
+                if (isPlaying) {
+                    nextQuestion();
+                }
+            }, 1000);
+        }
+    }
+    tick();
+}
+
 
 function nextQuestion() {
     if (!isPlaying) return; 
@@ -447,7 +493,13 @@ function nextQuestion() {
     
     questionCount++;
     els.progressText.innerText = currentMode === 'normal' ? `${questionCount} / ${totalQuestions}` : `WAVE: ${questionCount}`;
-    els.judgmentDisplay.classList.remove('show');
+    // ※自動フェードアウトさせるため、ここでは表示を消さない！
+    
+    // サバイバルモードのタイマー始動（最初の問題が表示されるタイミングで開始）
+    if (currentMode === 'survival' && !timerAnimationFrame) {
+        lastFrameTime = performance.now(); // 開始時間を現在にセット
+        timerAnimationFrame = requestAnimationFrame(updateSurvivalTimer);
+    }
 
     setNextHangul();
     els.targetDisplay.innerText = currentTarget;
@@ -463,17 +515,22 @@ function nextQuestion() {
 window.quitGame = function() {
     isPlaying = false; 
     if (timerAnimationFrame) cancelAnimationFrame(timerAnimationFrame);
+    if (countdownTimeout) clearTimeout(countdownTimeout);
+    
+    els.countdownOverlay.style.display = 'none';
     els.gameArea.style.display = 'none';
     els.startScreen.style.display = 'block';
     els.inputField.value = ''; els.inputField.disabled = false;
     els.currentReaction.innerText = '--- ms'; els.currentTyping.innerText = '--- ms';
     els.freqDisplay.innerText = ''; els.targetDisplay.style.color = 'var(--text-main)';
-    initTitleUI();
+    els.judgmentDisplay.className = "judgment-text"; // 非表示
+    updateTopNotification();
 };
 
 els.inputField.addEventListener('keydown', (e) => {
     if (!isPlaying) return;
     if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') return;
+    
     if (timeFirstKeyPressed === 0) {
         timeFirstKeyPressed = performance.now();
         const reactionTime = timeFirstKeyPressed - timeCharAppeared;
@@ -508,6 +565,10 @@ els.inputField.addEventListener('input', (e) => {
         els.targetDisplay.style.color = 'var(--success)';
         els.inputField.disabled = true;
 
+        if (currentDifficulty === 'hard' && judgment === 'PERFECT') {
+            unlockTitle("g4");
+        }
+
         setTimeout(() => {
             if (!isPlaying) return; 
             els.targetDisplay.style.color = 'var(--text-main)';
@@ -525,8 +586,13 @@ function unlockTitle(titleId) {
         localStorage.setItem('hangulUnseenTitles', JSON.stringify(Array.from(unseenTitles)));
         
         const trule = TITLE_RULES.find(r => r.id === titleId);
-        els.newAchievementName.innerText = trule.name;
-        els.achievementAlert.style.display = 'block';
+        if(trule) {
+            els.newAchievementName.innerText = trule.name;
+            els.achievementAlert.style.display = 'block';
+            els.achievementAlert.style.animation = 'none';
+            void els.achievementAlert.offsetWidth;
+            els.achievementAlert.style.animation = 'slideDown 0.5s ease-out';
+        }
     }
 }
 
@@ -553,17 +619,20 @@ function showResult() {
         els.survivalResultWave.style.display = 'block';
     }
 
-    // === 新・称号獲得判定 ===
     const eligibleRules = TITLE_RULES.filter(r => r.mode === currentMode && r.diff === currentDifficulty);
-    let topRule = null;
+    let topRule = null; 
 
     eligibleRules.forEach(r => {
         if ((currentMode === 'normal' && avgScore >= r.thresh) || 
             (currentMode === 'survival' && questionCount >= r.thresh)) {
             unlockTitle(r.id);
-            topRule = r;
+            topRule = r; 
         }
     });
+
+    if (maxCombo >= 50) unlockTitle("g1");
+    if (avgReaction > 0 && avgReaction < 150 && count >= 10) unlockTitle("g2");
+    if (currentDifficulty === 'hard' && maxCombo >= 10) unlockTitle("g3");
 
     let rankColor = "#6B7280";
     if(topRule) {
@@ -577,7 +646,7 @@ function showResult() {
     const rankBox = document.getElementById('rank-box');
     const rankTitle = document.getElementById('rank-title');
     rankBox.style.borderColor = rankColor;
-    rankTitle.innerText = topRule ? topRule.name : "結果を分析中...";
+    rankTitle.innerText = topRule ? topRule.name : "単なるキーボードの傍観者";
     rankTitle.style.color = rankColor;
 }
 
@@ -585,5 +654,4 @@ window.resetGame = function() {
     els.resultArea.style.display = 'none';
     els.startScreen.style.display = 'block';
     updateTopNotification();
-    initTitleUI(); 
 };
