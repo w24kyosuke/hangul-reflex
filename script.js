@@ -1,6 +1,7 @@
 let hangulDataEasy = [];
 let hangulDataNormal = [];
 let hangulDataHard = [];
+let hangulFreqMap = {}; 
 let totalWeightEasy = 0;
 
 let isPlaying = false;
@@ -20,25 +21,64 @@ let totalGameScore = 0;
 
 let currentCombo = 0;
 let maxCombo = 0;
-let survivalTimeRemaining = 5.0;
+let survivalTimeRemaining = 10.0; 
 let lastFrameTime = 0;
 let timerAnimationFrame = null;
 
-// --- やり込みローカルストレージ ---
-let nemesisData = JSON.parse(localStorage.getItem('hangulNemesis')) || { char: null, time: 0 };
-let unlockedTitles = JSON.parse(localStorage.getItem('hangulUnlockedTitles')) || ['【初級】ハングル一年生'];
-let equippedTitle = localStorage.getItem('hangulEquippedTitle') || '';
-// 出会ったハングル図鑑 (Setとして扱いやすくする)
-let encounteredHangul = new Set(JSON.parse(localStorage.getItem('hangulEncountered')) || []);
-const TOTAL_HANGUL_COUNT = 11172;
+// --- 称号マスターデータ (30個) ---
+const TITLE_RULES = [
+    // --- Normal Easy ---
+    { id: "ne1", cat: "通常 - Easy", name: "맞춤법 파괴자 (正書法破壊者)", cond: "プレイする", thresh: 0, mode: "normal", diff: "easy" },
+    { id: "ne2", cat: "通常 - Easy", name: "집현전 학동 (集賢殿の学童)", cond: "スコア 4,000 以上", thresh: 4000, mode: "normal", diff: "easy" },
+    { id: "ne3", cat: "通常 - Easy", name: "띄어쓰기 감별사 (分かち書き鑑定士)", cond: "スコア 7,000 以上", thresh: 7000, mode: "normal", diff: "easy" },
+    { id: "ne4", cat: "通常 - Easy", name: "두벌식 타자기의 달인 (2ボル式タイプライターの達人)", cond: "スコア 10,000 以上", thresh: 10000, mode: "normal", diff: "easy" },
+    { id: "ne5", cat: "通常 - Easy", name: "세종대왕의 숨겨진 오른팔 (世宗大王の隠された右腕)", cond: "スコア 13,000 以上", thresh: 13000, mode: "normal", diff: "easy" },
+    // --- Normal Normal ---
+    { id: "nn1", cat: "通常 - Normal", name: "오타와 사이시옷의 늪 (誤字と사이시옷の沼)", cond: "プレイする", thresh: 0, mode: "normal", diff: "normal" },
+    { id: "nn2", cat: "通常 - Normal", name: "주시경 선생의 수제자 (周時経先生の高弟)", cond: "スコア 5,000 以上", thresh: 5000, mode: "normal", diff: "normal" },
+    { id: "nn3", cat: "通常 - Normal", name: "국립국어원 명예 연구원 (国立国語院の名誉研究員)", cond: "スコア 8,000 以上", thresh: 8000, mode: "normal", diff: "normal" },
+    { id: "nn4", cat: "通常 - Normal", name: "한글 맞춤법 제1항의 화신 (ハングル正書法第1項の化身)", cond: "スコア 12,000 以上", thresh: 12000, mode: "normal", diff: "normal" },
+    { id: "nn5", cat: "通常 - Normal", name: "훈민정음 해례본의 진정한 저자 (訓民正音解例本の真の著者)", cond: "スコア 16,000 以上", thresh: 16000, mode: "normal", diff: "normal" },
+    // --- Normal Hard ---
+    { id: "nh1", cat: "通常 - Hard", name: "11,172개의 게슈탈트 붕괴 (11,172個のゲシュタルト崩壊)", cond: "プレイする", thresh: 0, mode: "normal", diff: "hard" },
+    { id: "nh2", cat: "通常 - Hard", name: "복잡한 겹받침의 지배자 (複雑な二重パッチムの支配者)", cond: "スコア 6,000 以上", thresh: 6000, mode: "normal", diff: "hard" },
+    { id: "nh3", cat: "通常 - Hard", name: "잃어버린 아래아(ㆍ)를 찾는 자 (失われた아래아[ㆍ]を探求する者)", cond: "スコア 10,000 以上", thresh: 10000, mode: "normal", diff: "hard" },
+    { id: "nh4", cat: "通常 - Hard", name: "팔만대장경 디지털 복원가 (八万大蔵経のデジタル復元家)", cond: "スコア 15,000 以上", thresh: 15000, mode: "normal", diff: "hard" },
+    { id: "nh5", cat: "通常 - Hard", name: "우주적 훈민정음 창제자 (宇宙的訓民正音の創製者)", cond: "スコア 20,000 以上", thresh: 20000, mode: "normal", diff: "hard" },
+    // --- Survival Easy ---
+    { id: "se1", cat: "サバイバル - Easy", name: "획순을 잊은 손가락 (画順を忘れた指)", cond: "プレイする", thresh: 0, mode: "survival", diff: "easy" },
+    { id: "se2", cat: "サバイバル - Easy", name: "서당의 지치지 않는 붓 (書堂の疲れない筆)", cond: "WAVE 15 到達", thresh: 15, mode: "survival", diff: "easy" },
+    { id: "se3", cat: "サバイバル - Easy", name: "모음조화의 영원한 굴레 (母音調和の永遠の羈絆)", cond: "WAVE 30 到達", thresh: 30, mode: "survival", diff: "easy" },
+    { id: "se4", cat: "サバイバル - Easy", name: "조선 왕조 실록 자동 기록기 (朝鮮王朝実録の自動記録機)", cond: "WAVE 60 到達", thresh: 60, mode: "survival", diff: "easy" },
+    { id: "se5", cat: "サバイバル - Easy", name: "영원히 돌아가는 금속 활자 (永遠に回り続ける金属活字)", cond: "WAVE 100 到達", thresh: 100, mode: "survival", diff: "easy" },
+    // --- Survival Normal ---
+    { id: "sn1", cat: "サバイバル - Normal", name: "형태소 단위의 붕괴 (形態素単位の崩壊)", cond: "プレイする", thresh: 0, mode: "survival", diff: "normal" },
+    { id: "sn2", cat: "サバイバル - Normal", name: "집현전 철야 작업반장 (集賢殿の徹夜作業班長)", cond: "WAVE 10 到達", thresh: 10, mode: "survival", diff: "normal" },
+    { id: "sn3", cat: "サバイバル - Normal", name: "표준국어대사전 무한 정독자 (標準国語大辞典の無限精読者)", cond: "WAVE 25 到達", thresh: 25, mode: "survival", diff: "normal" },
+    { id: "sn4", cat: "サバイバル - Normal", name: "자음과 모음의 무한동력 (子音と母音の無限動力)", cond: "WAVE 50 到達", thresh: 50, mode: "survival", diff: "normal" },
+    { id: "sn5", cat: "サバイバル - Normal", name: "언어의 한계를 초월한 타건 (言語の限界を超越した打鍵)", cond: "WAVE 80 到達", thresh: 80, mode: "survival", diff: "normal" },
+    // --- Survival Hard ---
+    { id: "sh1", cat: "サバイバル - Hard", name: "외계어 해독 실패 (宇宙語の解読失敗)", cond: "プレイする", thresh: 0, mode: "survival", diff: "hard" },
+    { id: "sh2", cat: "サバイバル - Hard", name: "옛한글 망령들의 인도자 (古ハングルの亡霊たちの導き手)", cond: "WAVE 5 到達", thresh: 5, mode: "survival", diff: "hard" },
+    { id: "sh3", cat: "サバイバル - Hard", name: "11,172번의 수라도 (11,172回の修羅道)", cond: "WAVE 15 到達", thresh: 15, mode: "survival", diff: "hard" },
+    { id: "sh4", cat: "サバイバル - Hard", name: "한글 빅뱅의 한가운데 (ハングル・ビッグバンの中心)", cond: "WAVE 30 到達", thresh: 30, mode: "survival", diff: "hard" },
+    { id: "sh5", cat: "サバイバル - Hard", name: "다중우주 표준어 제정 위원회 (多元宇宙標準語制定委員会)", cond: "WAVE 50 到達", thresh: 50, mode: "survival", diff: "hard" }
+];
 
-let sessionWorstChar = { char: null, time: 0 };
+// --- ローカルストレージ ---
+let unlockedTitles = JSON.parse(localStorage.getItem('hangulUnlockedTitles')) || [];
+let equippedTitleID = localStorage.getItem('hangulEquippedTitle') || '';
+let encounteredHangul = new Set(JSON.parse(localStorage.getItem('hangulEncountered')) || []);
+let unseenTitles = new Set(JSON.parse(localStorage.getItem('hangulUnseenTitles')) || []);
+let unseenHangul = new Set(JSON.parse(localStorage.getItem('hangulUnseenHangul')) || []);
+
+const TOTAL_HANGUL_COUNT = 11172;
 
 const els = {
     startScreen: document.getElementById('start-screen'),
     gameArea: document.getElementById('game-area'),
     resultArea: document.getElementById('result-area'),
-    collectionArea: document.getElementById('collection-area'), // 追加
+    collectionArea: document.getElementById('collection-area'),
     targetDisplay: document.getElementById('target-display'),
     freqDisplay: document.getElementById('freq-display'),
     inputField: document.getElementById('hangul-input'),
@@ -51,9 +91,6 @@ const els = {
     timerBar: document.getElementById('timer-bar'),
     judgmentDisplay: document.getElementById('judgment-display'),
     comboDisplay: document.getElementById('combo-display'),
-    nemesisContainer: document.getElementById('nemesis-container'),
-    nemesisChar: document.getElementById('nemesis-char'),
-    nemesisTime: document.getElementById('nemesis-time'),
     titleDisplay: document.getElementById('player-title-display'),
     titleSelect: document.getElementById('title-select'),
     titleEquipGroup: document.getElementById('title-equip-group'),
@@ -61,9 +98,11 @@ const els = {
     achievementAlert: document.getElementById('achievement-alert'),
     newAchievementName: document.getElementById('new-achievement-name'),
     survivalResultWave: document.getElementById('survival-result-wave'),
-    maxComboResult: document.getElementById('max-combo-result')
+    maxComboResult: document.getElementById('max-combo-result'),
+    btnCollectionTop: document.getElementById('btn-collection-top')
 };
 
+// === 初期化 ===
 function parseCSV(text) {
     hangulDataEasy = []; hangulDataNormal = []; hangulDataHard = [];
     const lines = text.replace(/\r/g, '').split('\n');
@@ -90,6 +129,7 @@ function parseCSV(text) {
                 if (code >= 0xAC00 && code <= 0xD7A3) {
                     const item = { char: char, freq: freq };
                     hangulDataHard.push(item);
+                    hangulFreqMap[char] = freq; 
                     if (freq >= 10000) hangulDataNormal.push(item);
                     hangulDataEasy.push({ ...item, weight: freq });
                 }
@@ -97,6 +137,7 @@ function parseCSV(text) {
         }
     }
     totalWeightEasy = hangulDataEasy.reduce((sum, item) => sum + item.weight, 0);
+    updateTopNotification();
     initTitleUI();
 }
 
@@ -113,33 +154,44 @@ window.addEventListener('DOMContentLoaded', () => {
         });
 });
 
-function initTitleUI() {
-    if (nemesisData.char) {
-        els.nemesisContainer.style.display = 'block';
-        els.nemesisChar.innerText = nemesisData.char;
-        els.nemesisTime.innerText = `構築に ${nemesisData.time.toFixed(0)} ms かかっています`;
+function updateTopNotification() {
+    if (unseenTitles.size > 0 || unseenHangul.size > 0) {
+        els.btnCollectionTop.innerHTML = `📖 コレクション＆図鑑を見る <span class="btn-new-badge">NEW</span>`;
+    } else {
+        els.btnCollectionTop.innerHTML = `📖 コレクション＆図鑑を見る`;
     }
+}
+
+function initTitleUI() {
     if (unlockedTitles.length > 0) {
         els.titleEquipGroup.style.display = 'flex';
-        els.titleSelect.innerHTML = '';
-        unlockedTitles.forEach(t => {
-            const opt = document.createElement('option');
-            opt.value = t; opt.innerText = t;
-            if (t === equippedTitle) opt.selected = true;
-            els.titleSelect.appendChild(opt);
+        els.titleSelect.innerHTML = '<option value="">称号を外す</option>';
+        unlockedTitles.forEach(tid => {
+            const trule = TITLE_RULES.find(r => r.id === tid);
+            if(trule) {
+                const opt = document.createElement('option');
+                opt.value = tid; opt.innerText = trule.name;
+                if (tid === equippedTitleID) opt.selected = true;
+                els.titleSelect.appendChild(opt);
+            }
         });
+    } else {
+        els.titleEquipGroup.style.display = 'none';
     }
-    if (equippedTitle) {
+
+    const eqRule = TITLE_RULES.find(r => r.id === equippedTitleID);
+    if (eqRule) {
         els.titleDisplay.style.display = 'inline-block';
-        els.titleDisplay.innerText = equippedTitle;
+        els.titleDisplay.innerText = eqRule.name;
+    } else {
+        els.titleDisplay.style.display = 'none';
     }
 }
 
 window.equipTitle = function() {
-    equippedTitle = els.titleSelect.value;
-    localStorage.setItem('hangulEquippedTitle', equippedTitle);
-    els.titleDisplay.innerText = equippedTitle;
-    els.titleDisplay.style.display = 'inline-block';
+    equippedTitleID = els.titleSelect.value;
+    localStorage.setItem('hangulEquippedTitle', equippedTitleID);
+    initTitleUI();
 };
 
 window.toggleModeSettings = function() {
@@ -147,36 +199,109 @@ window.toggleModeSettings = function() {
     els.qCountGroup.style.display = (currentMode === 'survival') ? 'none' : 'flex';
 };
 
-// === コレクション（図鑑）機能 ===
+// === コレクション（図鑑）描画 ===
 window.showCollection = function() {
     els.startScreen.style.display = 'none';
     els.collectionArea.style.display = 'block';
     
-    // 称号リスト更新
-    const titleList = document.getElementById('unlocked-titles-list');
-    titleList.innerHTML = '';
-    unlockedTitles.forEach(t => {
-        const li = document.createElement('li');
-        li.innerText = t;
-        titleList.appendChild(li);
+    // 称号リスト描画 (カテゴリ別)
+    const titlesContainer = document.getElementById('titles-container');
+    titlesContainer.innerHTML = '';
+    
+    const categories = [...new Set(TITLE_RULES.map(r => r.cat))];
+    categories.forEach(cat => {
+        const catHeader = document.createElement('div');
+        catHeader.className = 'category-header';
+        catHeader.innerText = cat;
+        titlesContainer.appendChild(catHeader);
+        
+        const ul = document.createElement('ul');
+        ul.className = 'titles-list';
+        
+        TITLE_RULES.filter(r => r.cat === cat).forEach(t => {
+            const li = document.createElement('li');
+            const isUnlocked = unlockedTitles.includes(t.id);
+            const isNew = unseenTitles.has(t.id);
+            
+            if (isUnlocked) {
+                li.innerHTML = `<span class="title-name">${t.name}</span>${isNew ? '<span class="new-badge">NEW</span>' : ''}<span class="title-cond">${t.cond}</span>`;
+                li.classList.add('unlocked');
+            } else {
+                li.innerHTML = `<span class="title-name locked">？？？</span><span class="title-cond">${t.cond}</span>`;
+                li.classList.add('locked');
+            }
+            ul.appendChild(li);
+        });
+        titlesContainer.appendChild(ul);
     });
 
-    // 図鑑更新
+    // ハングル図鑑描画 (頻度別グループ化)
     document.getElementById('hangul-encounter-count').innerText = encounteredHangul.size;
     const rate = (encounteredHangul.size / TOTAL_HANGUL_COUNT) * 100;
     document.getElementById('hangul-encounter-rate').innerText = rate.toFixed(2) + '%';
     
-    const grid = document.getElementById('hangul-grid');
-    grid.innerHTML = '';
-    encounteredHangul.forEach(char => {
-        const div = document.createElement('div');
-        div.innerText = char;
-        grid.appendChild(div);
+    const hContainer = document.getElementById('hangul-container');
+    hContainer.innerHTML = '';
+    
+    const tiers = [
+        { label: "【SS】 1億回以上 (超頻出)", min: 100000000 },
+        { label: "【S】 1000万回以上 (頻出)", min: 10000000 },
+        { label: "【A】 100万回以上 (一般)", min: 1000000 },
+        { label: "【B】 1万回以上 (稀)", min: 10000 },
+        { label: "【C】 1万回未満 (極レア)", min: 0 }
+    ];
+
+    const sortedEncountered = Array.from(encounteredHangul).sort((a, b) => {
+        return (hangulFreqMap[b] || 0) - (hangulFreqMap[a] || 0);
     });
+
+    tiers.forEach((tier, index) => {
+        const charsInTier = sortedEncountered.filter(c => {
+            const f = hangulFreqMap[c] || 0;
+            const max = index === 0 ? Infinity : tiers[index - 1].min;
+            return f >= tier.min && f < max;
+        });
+
+        if (charsInTier.length > 0) {
+            const catHeader = document.createElement('div');
+            catHeader.className = 'category-header';
+            catHeader.innerText = `${tier.label} - ${charsInTier.length}字`;
+            hContainer.appendChild(catHeader);
+
+            const grid = document.createElement('div');
+            grid.className = 'hangul-grid';
+            
+            charsInTier.forEach(char => {
+                const isNew = unseenHangul.has(char);
+                const div = document.createElement('div');
+                div.innerHTML = `${char}${isNew ? '<div class="new-dot"></div>' : ''}`;
+                div.onclick = () => showHangulDetail(char);
+                grid.appendChild(div);
+            });
+            hContainer.appendChild(grid);
+        }
+    });
+
+    unseenTitles.clear();
+    unseenHangul.clear();
+    localStorage.setItem('hangulUnseenTitles', JSON.stringify([]));
+    localStorage.setItem('hangulUnseenHangul', JSON.stringify([]));
+    updateTopNotification();
 };
+
+function showHangulDetail(char) {
+    const freq = hangulFreqMap[char] || 0;
+    const detailBox = document.getElementById('hangul-detail');
+    detailBox.innerHTML = `<strong>${char}</strong> <br>総出現頻度: ${freq.toLocaleString()} 回`;
+    detailBox.style.display = 'block';
+    detailBox.style.animation = 'none';
+    void detailBox.offsetWidth;
+    detailBox.style.animation = 'pop 0.2s';
+}
 
 window.hideCollection = function() {
     els.collectionArea.style.display = 'none';
+    document.getElementById('hangul-detail').style.display = 'none';
     els.startScreen.style.display = 'block';
 };
 
@@ -188,6 +313,14 @@ window.switchCollectionTab = function(tab) {
 
     document.getElementById(`tab-${tab}`).classList.add('active');
     document.getElementById(`collection-${tab}-content`).style.display = 'block';
+};
+
+window.resetAllData = function() {
+    if(confirm("本当に全てのセーブデータを消去しますか？\n※この操作は取り消せません。")) {
+        localStorage.clear();
+        alert("セーブデータを消去しました。ページを再読み込みします。");
+        location.reload();
+    }
 };
 
 // === ゲーム進行 ===
@@ -208,10 +341,11 @@ function setNextHangul() {
     currentTarget = selected.char;
     currentFreq = selected.freq;
 
-    // 図鑑に追加して保存
     if (!encounteredHangul.has(currentTarget)) {
         encounteredHangul.add(currentTarget);
+        unseenHangul.add(currentTarget);
         localStorage.setItem('hangulEncountered', JSON.stringify(Array.from(encounteredHangul)));
+        localStorage.setItem('hangulUnseenHangul', JSON.stringify(Array.from(unseenHangul)));
     }
 }
 
@@ -227,22 +361,14 @@ function calculateScore(reactTime, typeTime, freq, combo) {
 
 function displayJudgment(reactTime, typeTime) {
     const totalTime = reactTime + typeTime;
-    let judgment = "LATE"; // MISS から LATE に変更
+    let judgment = "LATE";
     els.judgmentDisplay.className = "judgment-text"; 
     
-    if (totalTime <= 400) {
-        judgment = "PERFECT";
-        els.judgmentDisplay.classList.add('judgment-perfect');
-        currentCombo++;
-    } else if (totalTime <= 800) {
-        judgment = "GREAT";
-        els.judgmentDisplay.classList.add('judgment-great');
-        currentCombo++;
-    } else {
-        judgment = "LATE";
-        els.judgmentDisplay.classList.add('judgment-late');
-        currentCombo = 0;
-    }
+    if (totalTime <= 450) { judgment = "PERFECT"; els.judgmentDisplay.classList.add('judgment-perfect'); currentCombo++; } 
+    else if (totalTime <= 750) { judgment = "GREAT"; els.judgmentDisplay.classList.add('judgment-great'); currentCombo++; } 
+    else if (totalTime <= 1200) { judgment = "GOOD"; els.judgmentDisplay.classList.add('judgment-good'); currentCombo++; } 
+    else if (totalTime <= 2000) { judgment = "OK"; els.judgmentDisplay.classList.add('judgment-ok'); currentCombo = 0; } 
+    else { judgment = "LATE"; els.judgmentDisplay.classList.add('judgment-late'); currentCombo = 0; }
 
     if (currentCombo > maxCombo) maxCombo = currentCombo;
 
@@ -269,7 +395,7 @@ function updateSurvivalTimer(timestamp) {
     lastFrameTime = timestamp;
     survivalTimeRemaining -= dt;
     
-    const percentage = Math.max(0, (survivalTimeRemaining / 5.0) * 100);
+    const percentage = Math.max(0, (survivalTimeRemaining / 10.0) * 100);
     els.timerBar.style.width = percentage + '%';
     
     if (survivalTimeRemaining <= 0) {
@@ -290,7 +416,7 @@ window.startGame = function(difficulty) {
         els.timerContainer.style.display = 'none';
     } else {
         totalQuestions = Infinity;
-        survivalTimeRemaining = 5.0;
+        survivalTimeRemaining = 10.0; 
         lastFrameTime = 0;
         els.timerContainer.style.display = 'block';
         timerAnimationFrame = requestAnimationFrame(updateSurvivalTimer);
@@ -298,7 +424,6 @@ window.startGame = function(difficulty) {
 
     questionCount = 0; totalGameScore = 0; currentCombo = 0; maxCombo = 0;
     reactionTimes = []; typingTimes = [];
-    sessionWorstChar = { char: null, time: 0 };
     els.achievementAlert.style.display = 'none';
     els.survivalResultWave.style.display = 'none';
     els.comboDisplay.style.display = 'none';
@@ -368,10 +493,6 @@ els.inputField.addEventListener('input', (e) => {
         reactionTimes.push(reactionTime);
         typingTimes.push(typingTime);
 
-        if (typingTime > sessionWorstChar.time) {
-            sessionWorstChar = { char: currentTarget, time: typingTime };
-        }
-
         els.currentTyping.innerText = `${typingTime.toFixed(0)} ms`;
         
         const judgment = displayJudgment(reactionTime, typingTime);
@@ -380,16 +501,12 @@ els.inputField.addEventListener('input', (e) => {
         els.currentScore.innerText = totalGameScore.toLocaleString();
         
         if (currentMode === 'survival') {
-            const recovery = Math.max(0.1, 1.0 - (questionCount * 0.02));
-            survivalTimeRemaining = Math.min(5.0, survivalTimeRemaining + recovery);
+            const recovery = Math.max(0.2, 1.5 - (questionCount * 0.015));
+            survivalTimeRemaining = Math.min(10.0, survivalTimeRemaining + recovery);
         }
 
         els.targetDisplay.style.color = 'var(--success)';
         els.inputField.disabled = true;
-
-        if (currentDifficulty === 'hard' && judgment === 'PERFECT') {
-            unlockTitle("【SS】11,172分の1の奇跡");
-        }
 
         setTimeout(() => {
             if (!isPlaying) return; 
@@ -399,11 +516,16 @@ els.inputField.addEventListener('input', (e) => {
     }
 });
 
-function unlockTitle(titleName) {
-    if (!unlockedTitles.includes(titleName)) {
-        unlockedTitles.push(titleName);
+function unlockTitle(titleId) {
+    if (!unlockedTitles.includes(titleId)) {
+        unlockedTitles.push(titleId);
+        unseenTitles.add(titleId);
+        
         localStorage.setItem('hangulUnlockedTitles', JSON.stringify(unlockedTitles));
-        els.newAchievementName.innerText = titleName;
+        localStorage.setItem('hangulUnseenTitles', JSON.stringify(Array.from(unseenTitles)));
+        
+        const trule = TITLE_RULES.find(r => r.id === titleId);
+        els.newAchievementName.innerText = trule.name;
         els.achievementAlert.style.display = 'block';
     }
 }
@@ -431,54 +553,37 @@ function showResult() {
         els.survivalResultWave.style.display = 'block';
     }
 
-    if (sessionWorstChar.time > nemesisData.time) {
-        nemesisData = sessionWorstChar;
-        localStorage.setItem('hangulNemesis', JSON.stringify(nemesisData));
-    }
+    // === 新・称号獲得判定 ===
+    const eligibleRules = TITLE_RULES.filter(r => r.mode === currentMode && r.diff === currentDifficulty);
+    let topRule = null;
 
-    // === 称号・ランク判定 ===
-    let rankName = ""; let rankColor = "";
-    
-    if (currentMode === 'survival') {
-        // サバイバルモードは WAVE数 と MAXコンボ で評価
-        if (questionCount >= 100 && maxCombo >= 50) { rankName = "【生存・伝説】不滅のタイピングマシン"; rankColor = "#D946EF"; }
-        else if (questionCount >= 50) { rankName = "【生存・達人】ゾーンに入りし者"; rankColor = "#EF4444"; }
-        else if (questionCount >= 20) { rankName = "【生存・中級】しぶとい指先"; rankColor = "#F59E0B"; }
-        else { rankName = "【生存・初級】儚きコンボ"; rankColor = "#6B7280"; }
-    } else {
-        // 通常モードは難易度と平均スコアで評価
-        if (currentDifficulty === 'easy') {
-            if (avgScore >= 10000) { rankName = "【Easy・達人】入門の覇者"; rankColor = "#10B981"; }
-            else if (avgScore >= 5000) { rankName = "【Easy・中級】成長するひよっこ"; rankColor = "#3B82F6"; }
-            else { rankName = "【Easy・初級】ハングル一年生"; rankColor = "#6B7280"; }
-        } 
-        else if (currentDifficulty === 'normal') {
-            if (avgScore >= 12000) { rankName = "【Normal・神業】歩く訓民正音"; rankColor = "#8B5CF6"; }
-            else if (avgScore >= 6000) { rankName = "【Normal・上級】優秀な宮廷書記官"; rankColor = "#F59E0B"; }
-            else { rankName = "【Normal・初級】迷える子音と母音"; rankColor = "#6B7280"; }
-        } 
-        else { // hard
-            if (avgScore >= 15000) { rankName = "【Hard・神業】世宗大王のゴーストライター"; rankColor = "#D946EF"; }
-            else if (avgScore >= 8000) { rankName = "【Hard・上級】ゲシュタルト崩壊の超越者"; rankColor = "#EF4444"; }
-            else { rankName = "【Hard・初級】11,172の深淵に呑まれし者"; rankColor = "#6B7280"; }
+    eligibleRules.forEach(r => {
+        if ((currentMode === 'normal' && avgScore >= r.thresh) || 
+            (currentMode === 'survival' && questionCount >= r.thresh)) {
+            unlockTitle(r.id);
+            topRule = r;
         }
+    });
+
+    let rankColor = "#6B7280";
+    if(topRule) {
+        if(topRule.id.endsWith("5")) rankColor = "#D946EF";
+        else if(topRule.id.endsWith("4")) rankColor = "#EF4444";
+        else if(topRule.id.endsWith("3")) rankColor = "#F59E0B";
+        else if(topRule.id.endsWith("2")) rankColor = "#10B981";
+        else rankColor = "#3B82F6";
     }
-
-    unlockTitle(rankName);
-
-    // 追加の実績アンロック
-    if (avgReaction > 0 && avgReaction < 150) unlockTitle("【S】機械の指");
-    if (currentDifficulty === 'hard' && maxCombo >= 10) unlockTitle("【S+】運命を捻じ曲げる者");
 
     const rankBox = document.getElementById('rank-box');
     const rankTitle = document.getElementById('rank-title');
     rankBox.style.borderColor = rankColor;
-    rankTitle.innerText = rankName;
+    rankTitle.innerText = topRule ? topRule.name : "結果を分析中...";
     rankTitle.style.color = rankColor;
 }
 
 window.resetGame = function() {
     els.resultArea.style.display = 'none';
     els.startScreen.style.display = 'block';
+    updateTopNotification();
     initTitleUI(); 
 };
