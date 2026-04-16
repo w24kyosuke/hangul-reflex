@@ -1,20 +1,28 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hangul Reflex</title>
+    <title>Hangul Reflex - やり込み限界突破版</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="container" id="start-screen">
     <h1>Hangul Reflex</h1>
+    
+    <div id="player-title-display" class="player-title" style="display: none;"></div>
+
     <p class="description">
         実データに基づくハングル1文字の反射タイピングゲーム。<br>
-        <strong>※本作は「構築速度（指が文字を組み立てる速さ）」を極めて重く評価します。モタつくとスコアが吹き飛びます。</strong>
+        構築速度と正確性が全て。限界を超えて図鑑を埋め尽くせ！
     </p>
+
+    <div id="nemesis-container" class="nemesis-box" style="display: none;">
+        <div class="nemesis-label">⚔️ 現在の宿敵 (最も構築が遅い文字) ⚔️</div>
+        <div class="nemesis-char" id="nemesis-char"></div>
+        <div class="nemesis-time" id="nemesis-time"></div>
+    </div>
 
     <div id="loading-msg" class="loading">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite; vertical-align: middle; margin-right: 0.5rem;">
@@ -24,9 +32,19 @@
     </div>
 
     <div id="start-form" style="display: none;">
-        <p style="color: #EF4444; font-size: 0.85rem; margin-bottom: 1rem;">※キーボードを「韓国語入力（ハングル）」に切り替えてください。</p>
+        <button class="btn-collection" onclick="showCollection()">📖 コレクション＆図鑑を見る</button>
 
+        <p style="color: #EF4444; font-size: 0.85rem; margin-bottom: 1rem;">※キーボードを「韓国語入力（ハングル）」に切り替えてください。</p>
+        
         <div class="form-group">
+            <label for="game-mode" style="font-weight:bold;">モード:</label>
+            <select id="game-mode" onchange="toggleModeSettings()">
+                <option value="normal">通常 (問題数指定)</option>
+                <option value="survival">🔥サバイバル (エンドレス・即死)🔥</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="q-count-group">
             <label for="q-count" style="font-weight:bold;">問題数:</label>
             <select id="q-count">
                 <option value="10">10問</option>
@@ -35,35 +53,73 @@
             </select>
         </div>
 
+        <div class="form-group" id="title-equip-group" style="display: none;">
+            <label for="title-select" style="font-weight:bold;">称号装備:</label>
+            <select id="title-select" onchange="equipTitle()"></select>
+        </div>
+        
         <div class="difficulty-select">
             <button class="btn-easy difficulty-btn" onclick="startGame('easy')">
                 <span class="title">Easy: スタンダード</span>
-                <span class="desc">実際の出現頻度で完全重み付け。よく使う文字で基礎固め！</span>
+                <span class="desc">出現頻度で完全重み付け。超頻出の文字で基礎固め！</span>
             </button>
             <button class="btn-normal difficulty-btn" onclick="startGame('normal')">
                 <span class="title">Normal: チャレンジ</span>
-                <span class="desc">重み付けを緩和し、普段見ないマイナー文字の出現率をアップ！</span>
+                <span class="desc">出現回数1万回以上の文字からランダム。マイナー文字に注意。</span>
             </button>
             <button class="btn-hard difficulty-btn" onclick="startGame('hard')">
                 <span class="title">Hard: リストガチャ</span>
-                <span class="desc">CSV収録リスト（数千文字）から完全均等ランダムの無慈悲モード。</span>
+                <span class="desc">CSV収録の全ハングルから完全ランダム。容赦のない無慈悲モード。</span>
             </button>
         </div>
     </div>
 </div>
 
-<div class="container" id="game-area">
+<div class="container" id="collection-area" style="display: none;">
+    <h1>コレクション</h1>
+    
+    <div class="collection-tabs">
+        <button class="tab-btn active" id="tab-titles" onclick="switchCollectionTab('titles')">獲得称号</button>
+        <button class="tab-btn" id="tab-hangul" onclick="switchCollectionTab('hangul')">ハングル図鑑</button>
+    </div>
+
+    <div id="collection-titles-content" class="collection-content">
+        <p>あなたが獲得した称号一覧です。</p>
+        <ul id="unlocked-titles-list" class="titles-list"></ul>
+    </div>
+
+    <div id="collection-hangul-content" class="collection-content" style="display: none;">
+        <p>これまでに出会ったハングル文字です。</p>
+        <div class="progress-box">
+            <span>遭遇率: </span>
+            <strong id="hangul-encounter-rate">0.00%</strong>
+            <span style="font-size: 0.8rem; color: var(--text-muted);"> (<span id="hangul-encounter-count">0</span> / 11172)</span>
+        </div>
+        <div id="hangul-grid" class="hangul-grid"></div>
+    </div>
+
+    <button class="btn-reset" onclick="hideCollection()">タイトルへ戻る</button>
+</div>
+
+<div class="container" id="game-area" style="position: relative;">
     <div class="top-info">
         <div class="current-diff" id="diff-badge">Normal</div>
         <div class="progress" id="progress-text">1 / 10</div>
         <button class="btn-quit" onclick="quitGame()">中断</button>
     </div>
 
+    <div id="timer-container" class="timer-container" style="display: none;">
+        <div id="timer-bar" class="timer-bar"></div>
+    </div>
+    
     <div class="target-char" id="target-display">가</div>
     <div class="freq-info" id="freq-display"></div>
+    
+    <div id="judgment-display" class="judgment-text"></div>
+    <div id="combo-display" class="combo-text" style="display: none;">0 COMBO!</div>
 
     <input type="text" id="hangul-input" autocomplete="off" spellcheck="false" placeholder="입력">
-
+    
     <div class="stats-board">
         <div class="stat-item">
             <span class="stat-label">反応時間</span>
@@ -83,10 +139,15 @@
 <div class="container" id="result-area">
     <h1>Result</h1>
 
+    <div id="achievement-alert" class="achievement-alert" style="display: none;">
+        🎉 新しい称号を獲得しました: <span id="new-achievement-name" style="font-weight:bold;"></span>
+    </div>
+    
     <div class="rank-box" id="rank-box">
         <div class="rank-label">最終評価ランク</div>
         <div class="rank-title" id="rank-title">【S+】世宗大王のゴーストライター</div>
         <div class="total-score-display">Total Score: <span id="final-score" style="font-weight:bold;">0</span></div>
+        <div id="survival-result-wave" style="display: none; font-size: 1.2rem; margin-top: 0.5rem; color: #FCD34D;"></div>
     </div>
 
     <div class="stats-board" style="border-top: none; padding-top: 0; margin-top: 1rem;">
@@ -99,8 +160,8 @@
             <span class="stat-value" id="avg-typing">0 ms</span>
         </div>
         <div class="stat-item">
-            <span class="stat-label">平均 スコア/文字</span>
-            <span class="stat-value stat-score" id="avg-score">0</span>
+            <span class="stat-label">Max Combo</span>
+            <span class="stat-value" id="max-combo-result" style="color: #F59E0B;">0</span>
         </div>
     </div>
     <button class="btn-reset" onclick="resetGame()">タイトルへ戻る</button>
@@ -108,10 +169,6 @@
 
 <footer class="footer">
     Character frequency data is powered by <a href="https://github.com/Bin-2/FineFreq" target="_blank" rel="noopener noreferrer">FineFreq</a>.
-    <div class="citation">
-        Xu, B. (2025). FineFreq: A Multilingual Character Frequency Dataset from Web-Scale Text.<br>
-        <i>arXiv preprint arXiv:2512.09701</i>.
-    </div>
 </footer>
 
 <script src="script.js"></script>
