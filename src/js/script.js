@@ -145,7 +145,7 @@ function parseCSV(text) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    fetch('kor_Hang.csv')
+    fetch('public/data/kor_Hang.csv')
         .then(response => { if (!response.ok) throw new Error('Network error'); return response.text(); })
         .then(text => {
             parseCSV(text);
