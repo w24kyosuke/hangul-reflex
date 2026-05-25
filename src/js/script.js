@@ -145,7 +145,7 @@ function parseCSV(text) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    fetch('public/data/kor_Hang.csv')
+    fetch('public/data/kor_Hang_lite.csv')
         .then(response => { if (!response.ok) throw new Error('Network error'); return response.text(); })
         .then(text => {
             parseCSV(text);
@@ -321,7 +321,15 @@ function setNextHangul() {
             if (r <= 0) { selected = hangulDataEasy[i]; break; }
         }
     } else if (currentDifficulty === 'normal') {
-        selected = hangulDataNormal[Math.floor(Math.random() * hangulDataNormal.length)];
+        // レベルによるプール選択
+        let pool = hangulDataHard; // Level 5 (All characters)
+        if (currentLevel === 1) pool = hangulDataHard.filter(item => item.freq >= 1000000);
+        else if (currentLevel === 2) pool = hangulDataHard.filter(item => item.freq >= 100000);
+        else if (currentLevel === 3) pool = hangulDataHard.filter(item => item.freq >= 10000);
+        else if (currentLevel === 4) pool = hangulDataHard.filter(item => item.freq >= 1000);
+        
+        if (pool.length === 0) pool = hangulDataNormal;
+        selected = pool[Math.floor(Math.random() * pool.length)];
     } else {
         selected = hangulDataHard[Math.floor(Math.random() * hangulDataHard.length)];
     }
@@ -343,7 +351,8 @@ function calculateScore(reactTime, typeTime, freq, combo) {
     const baseScore = typingScore + totalTimeScore;
     const rarityBonus = Math.max(0, 10 - Math.log10(freq + 1)); 
     const comboBonus = combo * 0.05; 
-    const multiplier = (1.0 + (rarityBonus * 0.1)) * (1.0 + comboBonus); 
+    const levelBonus = (currentDifficulty === 'normal') ? (currentLevel - 1) * 0.1 : 0;
+    const multiplier = (1.0 + (rarityBonus * 0.1)) * (1.0 + comboBonus) * (1.0 + levelBonus); 
     return Math.floor(baseScore * multiplier);
 }
 
@@ -438,6 +447,7 @@ window.startGame = function(difficulty) {
     }
 
     questionCount = 0; totalGameScore = 0; currentCombo = 0; maxCombo = 0;
+    currentLevel = 1;
     reactionTimes = []; typingTimes = [];
     els.achievementAlert.style.display = 'none';
 
@@ -450,6 +460,13 @@ window.startGame = function(difficulty) {
     els.comboDisplay.style.display = 'none';
     els.inputField.value = "";
 
+    const levelBadge = document.getElementById('level-badge');
+    if (difficulty === 'normal') {
+        levelBadge.style.display = 'inline-block';
+        levelBadge.innerText = 'Lv.1';
+    } else {
+        levelBadge.style.display = 'none';
+    }
     
     // 判定テキストの初期化（クラスをリセット）
     els.judgmentDisplay.className = "judgment-text";
@@ -485,7 +502,7 @@ function startCountdown() {
             count--;
             countdownTimeout = setTimeout(tick, 1000);
         } else {
-            els.countdownDisplay.innerText = "시작! (START)";
+            els.countdownDisplay.innerText = t('start_msg');
             els.countdownDisplay.style.animation = 'none';
             void els.countdownDisplay.offsetWidth;
             els.countdownDisplay.style.animation = 'countdownPop 1s ease-out forwards';
@@ -509,6 +526,18 @@ function nextQuestion() {
     questionCount++;
     els.progressText.innerText = currentMode === 'normal' ? `${questionCount} / ${totalQuestions}` : `WAVE: ${questionCount}`;
     // ※自動フェードアウトさせるため、ここでは表示を消さない！
+    
+    if (currentDifficulty === 'normal') {
+        const newLevel = Math.min(5, Math.floor((questionCount - 1) / 5) + 1);
+        if (newLevel > currentLevel) {
+            currentLevel = newLevel;
+            const levelBadge = document.getElementById('level-badge');
+            levelBadge.innerText = `Lv.${currentLevel}`;
+            levelBadge.style.animation = 'none';
+            void levelBadge.offsetWidth; // リフロー
+            levelBadge.style.animation = 'pulse 0.5s forwards';
+        }
+    }
     
     // サバイバルモードのタイマー始動（最初の問題が表示されるタイミングで開始）
     if (currentMode === 'survival' && !timerAnimationFrame) {
@@ -557,8 +586,14 @@ els.inputField.addEventListener('keydown', (e) => {
     }
 });
 
+const inko = new Inko();
+
 els.inputField.addEventListener('input', (e) => {
     if (!isPlaying) return;
+    
+    // Inko.js を使って入力文字(英語配列)をハングルに変換
+    els.inputField.value = inko.en2ko(els.inputField.value);
+
     if (els.inputField.value === currentTarget) {
         const timeCharCompleted = performance.now();
         if (timeFirstKeyPressed === 0) timeFirstKeyPressed = timeCharAppeared;
@@ -676,4 +711,13 @@ window.resetGame = function() {
     els.resultArea.style.display = 'none';
     els.startScreen.style.display = 'block';
     updateTopNotification();
+};
+
+window.shareOnX = function() {
+    let rankText = document.getElementById('rank-title').innerText;
+    let score = document.getElementById('final-score').innerText;
+    let text = t('share_text').replace('{score}', score).replace('{rank}', rankText);
+    let url = "https://hangul-reflex.com"; // プレースホルダーURL
+    let shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}&hashtags=HangulReflex`;
+    window.open(shareUrl, '_blank');
 };
