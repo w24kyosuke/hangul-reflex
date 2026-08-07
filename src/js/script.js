@@ -28,6 +28,8 @@ let lastFrameTime = 0;
 let timerAnimationFrame = null;
 let countdownTimeout = null;
 let currentLevel = 1;
+let rawEnglishBuffer = '';   // 英語キー入力の生バッファ
+let isComposing = false;     // IME composition 中かどうか
 
 const TITLE_RULES = [
     { id: "ne1", cat: "通常 - Easy", name: "맞춤법 파괴자 (正書法破壊者)", cond: "プレイする", thresh: 0, mode: "normal", diff: "easy" },
@@ -460,6 +462,8 @@ window.startGame = function(difficulty) {
     els.judgmentDisplay.className = "judgment-text"; 
     els.comboDisplay.style.display = 'none';
     els.inputField.value = "";
+    rawEnglishBuffer = '';
+    isComposing = false;
 
     const levelBadge = document.getElementById('level-badge');
     if (difficulty === 'normal') {
@@ -551,6 +555,8 @@ function nextQuestion() {
     els.freqDisplay.innerText = t('freq_display').replace('{freq}', currentFreq.toLocaleString());
     
     els.inputField.value = '';
+    rawEnglishBuffer = '';
+    isComposing = false;
     els.inputField.disabled = false;
     els.inputField.focus();
     timeFirstKeyPressed = 0;
@@ -570,6 +576,8 @@ window.quitGame = function() {
     els.gameArea.style.display = 'none';
     els.startScreen.style.display = 'block';
     els.inputField.value = ''; els.inputField.disabled = false;
+    rawEnglishBuffer = '';
+    isComposing = false;
     els.currentReaction.innerText = '--- ms'; els.currentTyping.innerText = '--- ms';
     els.freqDisplay.innerText = ''; els.targetDisplay.style.color = 'var(--text-main)';
     els.judgmentDisplay.className = "judgment-text"; // 非表示
@@ -579,6 +587,7 @@ window.quitGame = function() {
 els.inputField.addEventListener('keydown', (e) => {
     if (!isPlaying) return;
     if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta') return;
+    if (e.key === 'Process') return; // IME processing key
     
     if (timeFirstKeyPressed === 0) {
         timeFirstKeyPressed = performance.now();
@@ -589,12 +598,13 @@ els.inputField.addEventListener('keydown', (e) => {
 
 const inko = new Inko();
 
-els.inputField.addEventListener('input', (e) => {
-    if (!isPlaying) return;
-    
-    // Inko.js を使って入力文字(英語配列)をハングルに変換
-    els.inputField.value = inko.en2ko(els.inputField.value);
+function containsHangul(str) {
+    return /[\u3131-\u3163\uAC00-\uD7A3]/.test(str);
+}
 
+function checkAnswer() {
+    if (els.inputField.disabled) return; // すでに正解処理中なら何もしない
+    
     if (els.inputField.value === currentTarget) {
         const timeCharCompleted = performance.now();
         if (timeFirstKeyPressed === 0) timeFirstKeyPressed = timeCharAppeared;
@@ -630,6 +640,34 @@ els.inputField.addEventListener('input', (e) => {
             nextQuestion();
         }, 300); 
     }
+}
+
+// IME Composition イベント（韓国語IMEで入力する場合）
+els.inputField.addEventListener('compositionstart', () => {
+    isComposing = true;
+});
+
+els.inputField.addEventListener('compositionend', () => {
+    isComposing = false;
+    // IME入力完了後、フィールドの値をそのまま使って正解判定
+    if (isPlaying) checkAnswer();
+});
+
+els.inputField.addEventListener('input', (e) => {
+    if (!isPlaying) return;
+    
+    // IME composition 中は Inko 変換は行わず、そのまま正解判定だけ行う
+    if (isComposing) {
+        checkAnswer();
+        return;
+    }
+    
+    // Inko.jsを使って、現在のフィールド値を一度すべて英字に戻し、再度ハングルに変換する
+    // これにより、すでに変換されたハングルと後続の英字入力が正しく音節合成される
+    const rawEnglish = inko.ko2en(els.inputField.value);
+    els.inputField.value = inko.en2ko(rawEnglish);
+    
+    checkAnswer();
 });
 
 function unlockTitle(titleId) {
