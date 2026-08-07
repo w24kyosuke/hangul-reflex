@@ -27,6 +27,7 @@ let survivalTimeRemaining = 10.0;
 let lastFrameTime = 0;
 let timerAnimationFrame = null;
 let countdownTimeout = null;
+let currentLevel = 1;
 
 const TITLE_RULES = [
     { id: "ne1", cat: "通常 - Easy", name: "맞춤법 파괴자 (正書法破壊者)", cond: "プレイする", thresh: 0, mode: "normal", diff: "easy" },
@@ -159,9 +160,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function updateTopNotification() {
     if (unseenTitles.size > 0 || unseenHangul.size > 0) {
-        els.btnCollectionTop.innerHTML = `コレクション＆図鑑を見る <span class="btn-new-badge">NEW</span>`;
+        els.btnCollectionTop.innerHTML = `${t('btn_collection')} <span class="btn-new-badge">NEW</span>`;
     } else {
-        els.btnCollectionTop.innerHTML = `コレクション＆図鑑を見る`;
+        els.btnCollectionTop.innerHTML = t('btn_collection');
     }
 }
 
@@ -305,9 +306,9 @@ window.switchCollectionTab = function(tab) {
 };
 
 window.resetAllData = function() {
-    if(confirm("本当に全てのセーブデータを消去しますか？\n※この操作は取り消せません。")) {
+    if(confirm(t('confirm_reset'))) {
         localStorage.clear();
-        alert("セーブデータを消去しました。ページを再読み込みします。");
+        alert(t('alert_reset'));
         location.reload();
     }
 };
@@ -547,7 +548,7 @@ function nextQuestion() {
 
     setNextHangul();
     els.targetDisplay.innerText = currentTarget;
-    els.freqDisplay.innerText = `[ 出現頻度: ${currentFreq.toLocaleString()} 回 ]`;
+    els.freqDisplay.innerText = t('freq_display').replace('{freq}', currentFreq.toLocaleString());
     
     els.inputField.value = '';
     els.inputField.disabled = false;
@@ -658,6 +659,7 @@ function showResult() {
     }
     els.gameArea.style.display = 'none';
     els.resultArea.style.display = 'block';
+    els.survivalResultWave.style.display = 'none';
 
     const count = Math.max(1, reactionTimes.length);
     const avgReaction = reactionTimes.reduce((a, b) => a + b, 0) / count;
@@ -680,6 +682,8 @@ function showResult() {
     let topRule = null; 
 
     eligibleRules.forEach(r => {
+        // NOTE: Normal mode compares average score per question (totalGameScore / count)
+        // against threshold. Survival mode compares total wave count.
         if ((currentMode === 'normal' && avgScore >= r.thresh) || 
             (currentMode === 'survival' && questionCount >= r.thresh)) {
             unlockTitle(r.id);

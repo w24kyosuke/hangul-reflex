@@ -32,7 +32,12 @@ const i18nDict = {
         avg_typing: "平均 構築時間",
         placeholder: "入力",
         share_btn: "𝕏 で共有する",
-        share_text: "Hangul Reflexで {score} 点を記録し、【{rank}】ランクを達成しました！"
+        share_text: "Hangul Reflexで {score} 点を記録し、【{rank}】ランクを達成しました！",
+        start_msg: "スタート！ (START)",
+        res_title: "Result",
+        confirm_reset: "本当に全てのセーブデータを消去しますか？\n※この操作は取り消せません。",
+        alert_reset: "セーブデータを消去しました。ページを再読み込みします。",
+        freq_display: "[ 出現頻度: {freq} 回 ]"
     },
     en: {
         desc: "Hangul single-character reflex typing game.<br>Master your typing speed and accuracy.",
@@ -65,7 +70,14 @@ const i18nDict = {
         rank_label: "Final Rank",
         avg_reaction: "Avg Reaction",
         avg_typing: "Avg Typing",
-        placeholder: "Type here"
+        placeholder: "Type here",
+        start_msg: "START!",
+        res_title: "Result",
+        confirm_reset: "Are you sure you want to erase all save data?\n* This action cannot be undone.",
+        alert_reset: "Save data has been erased. Reloading the page.",
+        share_btn: "Share on 𝕏",
+        share_text: "I scored {score} points on Hangul Reflex and achieved the rank 【{rank}】!",
+        freq_display: "[ Frequency: {freq} ]"
     },
     ko: {
         desc: "한글 1글자 반사 타이핑 게임.<br>타이핑 속도와 정확성을 극한으로 끌어올리세요.",
@@ -103,7 +115,8 @@ const i18nDict = {
         alert_reset: "세이브 데이터를 지웠습니다. 페이지를 새로고침합니다.",
         start_msg: "시작! (START)",
         share_btn: "𝕏 공유하기",
-        share_text: "Hangul Reflex에서 {score}점을 기록하고 【{rank}】 랭크를 달성했습니다!"
+        share_text: "Hangul Reflex에서 {score}점을 기록하고 【{rank}】 랭크를 달성했습니다!",
+        freq_display: "[ 출현 빈도: {freq}회 ]"
     }
 };
 
